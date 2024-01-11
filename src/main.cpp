@@ -1,4 +1,5 @@
 #include <iostream>
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <cstdio>
@@ -26,20 +27,37 @@ void from_toml(const table& t, Action& a) {
         a.description = *t.get_as<string>("description");
         a.command = *t.get_as<string>("command");
     } catch (const parse_exception& e) {
-        throw std::invalid_argument("Error getting value from config:");
+        throw invalid_argument("Error getting value from config:");
     }
 }
 
 int main(int argc, char* argv[]) {
+
     if (argc < 3 || argv[2][0] == '-') {
     cerr << "Usage: -c <config_file>" << endl;
     return 1;
     }
 
-    const string configFile2 = argv[2];
+    const string configFile = argv[2];
+
+    const char* userHome = getenv("HOME");
+
+    if (userHome == nullptr) {
+        cerr << "Error: HOME environment variable not set." << endl;
+        return 1;
+    }
+
+    string rapidMenuPath = string(userHome) + "/.config/RapidMenu";
+
+    if (filesystem::exists(rapidMenuPath) && filesystem::is_directory(rapidMenuPath)) {
+    } else {
+        system("mkdir -p /home/$USER/.config/RapidMenu");
+        cerr << "Setting up config." << endl;
+        return 1;
+    }
 
     try {
-        auto config = parse_file(configFile2);
+        auto config = parse_file(configFile);
 
         // Create the Rofi command
         setenv("LC_CTYPE", "", 1);  // Unset LC_CTYPE
@@ -51,7 +69,7 @@ int main(int argc, char* argv[]) {
                 Action a;
                 from_toml(*tableItem.second->as_table(), a);
                 namesList += a.names + "\n";
-            } catch (const std::invalid_argument& e) {
+            } catch (const invalid_argument& e) {
                 cerr << "Error getting value from config: " << e.what() << endl;
                 return 1;
             }
@@ -93,7 +111,7 @@ int main(int argc, char* argv[]) {
 
                     return 0;
                 }
-            } catch (const std::invalid_argument& e) {
+            } catch (const invalid_argument& e) {
                 cerr << "Error getting value from config: " << e.what() << endl;
                 return 1;
             }
