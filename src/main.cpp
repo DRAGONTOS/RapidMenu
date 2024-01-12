@@ -18,8 +18,8 @@ LISTING COMMANDS:
     -b:           Make a binary out of a config.
 )#";
 
-const string invalidvalue = R"#(Invalid value in config: )#";
-const string egc = R"#(Invalid command in config: )#";
+const string invalidvalue   = R"#(Invalid value in config: )#";
+const string egc            = R"#(Invalid command in config: )#";
 
 
 struct Action {
@@ -28,27 +28,27 @@ struct Action {
     string command;
 
     Action(
-        const string& nms = "", 
-        const string& desc = "", 
-        const string& cmd = "")
-        
-        : names(nms), 
+        const string& nms   = "", 
+        const string& desc  = "", 
+        const string& cmd   = "")
+        :
+        names(nms), 
         description(desc), 
         command(cmd) {}
 };
 
 void from_toml(const table& t, Action& a) {
     try {
-        a.names = *t.get_as<string>("names");
-        a.description = *t.get_as<string>("description");
-        a.command = *t.get_as<string>("command");
+        a.names         = *t.get_as<string>("names");
+        a.description   = *t.get_as<string>("description");
+        a.command       = *t.get_as<string>("command");
     } catch (const parse_exception& e) {
         throw invalid_argument(invalidvalue.c_str());
     }
 }
 
 int main(int argc, char* argv[]) {
-    const char* configFile = nullptr;  // Initialize to nullptr
+    const char* configFile = nullptr; 
 
     if (argc > 1 && strcmp(argv[1], "-c") == 0) {
         if (argc < 3 || argv[2][0] == '-') {
@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
         configFile = argv[2];
     } else if (argc > 1 && strcmp(argv[1], "-d") == 0) {
         std::cerr << USAGE.c_str() << std::endl;
-        return 0;  // Assuming you want to exit after printing the message
+        return 0;
     }else{
         std::cerr << USAGE.c_str() << std::endl;
         return 0;
@@ -96,9 +96,9 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        string rname = config->get_table("runner")->get_as<string>("rname").value_or("");
-        string rtheme = config->get_table("runner")->get_as<string>("rtheme").value_or("");
-        string rcommand = config->get_table("runner")->get_as<string>("rcommand").value_or("");
+        string rname    = config->get_table("runner")->get_as<string>("rname").value_or("dashboard:");
+        string rtheme   = config->get_table("runner")->get_as<string>("rtheme").value_or("");
+        string rcommand = config->get_table("runner")->get_as<string>("rcommand").value_or("rofi -dmenu -p");
 
         string rofiCommand = "printf '" + namesList + "' | " + rcommand + " '" + rname + " ' " + rtheme;
         FILE *rofiProcess = popen(rofiCommand.c_str(), "r");
@@ -133,7 +133,6 @@ int main(int argc, char* argv[]) {
                 return 1;
             }
         }
-
         cout << "Invalid choice. Please enter a valid option." << endl;
 
     } catch (const parse_exception& e) {
