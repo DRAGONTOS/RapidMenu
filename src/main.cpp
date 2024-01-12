@@ -11,6 +11,7 @@
 
 using namespace std;
 using namespace cpptoml;
+using namespace filesystem;
 
 const string USAGE = R"#(usage:  RapidMenu [flags] [<command> [args]]
 LISTING COMMANDS:
@@ -52,27 +53,29 @@ int main(int argc, char* argv[]) {
 
     if (argc > 1 && strcmp(argv[1], "-c") == 0) {
         if (argc < 3 || argv[2][0] == '-') {
-            std::cerr << USAGE.c_str() << std::endl;
+            cerr << USAGE.c_str() << endl;
             return 1;
         }
-        
         configFile = argv[2];
+
     } else if (argc > 1 && strcmp(argv[1], "-d") == 0) {
-        std::cerr << USAGE.c_str() << std::endl;
+        cerr << USAGE.c_str() << endl;
         return 0;
     }else{
-        std::cerr << USAGE.c_str() << std::endl;
+        cerr << USAGE.c_str() << endl;
         return 0;
     }
 
     if (configFile) {
+        cerr << USAGE.c_str() << endl;
+        return 0;
     }
 
     const char* userHome = getenv("HOME");
 
     string rapidMenuPath = string(userHome) + "/.config/RapidMenu";
 
-    if (filesystem::exists(rapidMenuPath) && filesystem::is_directory(rapidMenuPath)) {
+    if (exists(rapidMenuPath) && is_directory(rapidMenuPath)) {
     } else {
         system("mkdir -p /home/$USER/.config/RapidMenu");
         cerr << "Setting up config." << endl;
