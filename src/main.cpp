@@ -1,5 +1,7 @@
 #include <iostream>
 #include <filesystem>
+#include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <string>
 #include <cstdio>
@@ -20,18 +22,28 @@ LISTING COMMANDS:
 
 const string invalidvalue   = R"#(Invalid value in config: )#";
 const string egc            = R"#(Invalid command in config: )#";
+const string invalidconfig  = R"#(Not a valid config: )#";
 
 
 struct Action {
+    string rnames;
+    string rdescription;
+    string rcommand;
     string names;
     string description;
     string command;
 
     Action(
+        const string& rnms  = "", 
+        const string& rdesc = "", 
+        const string& rcmd  = "", 
         const string& nms   = "", 
         const string& desc  = "", 
         const string& cmd   = "")
         :
+        rnames(rnms),
+        rdescription(rdesc),
+        rcommand(rcmd),
         names(nms), 
         description(desc), 
         command(cmd) {}
@@ -39,6 +51,9 @@ struct Action {
 
 void from_toml(const table& t, Action& a) {
     try {
+        a.rnames        = *t.get_as<string>("rnames");
+        a.rdescription  = *t.get_as<string>("rdescription");
+        a.rcommand      = *t.get_as<string>("rcommand");
         a.names         = *t.get_as<string>("names");
         a.description   = *t.get_as<string>("description");
         a.command       = *t.get_as<string>("command");
@@ -49,10 +64,9 @@ void from_toml(const table& t, Action& a) {
 
 int main(int argc, char* argv[]) {
     const char* configFile      = nullptr; 
-    const char* configFile2     = nullptr; 
-
     const char* userHome        = getenv("HOME");
-    string rapidMenuPath = string(userHome) + "/.config/RapidMenu";
+    string rapidMenuPath        = string(userHome) + "/.config/RapidMenu";
+    string rapidcommand         = "mkdir -p " + rapidMenuPath;
 
     if (argc > 1 && strcmp(argv[1], "-c") == 0) {
         if (argc < 3 || argv[2][0] == '-') {
@@ -61,13 +75,9 @@ int main(int argc, char* argv[]) {
         }
         configFile = argv[2];
 
-        if (configFile) {
-        }
-
-
         if (filesystem::exists(rapidMenuPath) && filesystem::is_directory(rapidMenuPath)) {
         } else {
-            system("mkdir -p /home/$USER/.config/RapidMenu");
+            system(rapidcommand.c_str());
             cerr << "Setting up config." << endl;
             return 1;
         }
@@ -153,17 +163,67 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        const char* bconfig = nullptr;
-        const char* bexe = nullptr;
+        const char* bconfig     = nullptr;
+        const char* bexe        = nullptr;
+        const char* userHome    = getenv("HOME");
 
         string bexeout;
+        string byn;
+        string bconfigin        = argv[2];
+        string bindir           = string(userHome) + "/.local/bin";
+        string createbindir     = "mkdir -p " + bindir;
 
-        bconfig = argv[2];
+        if (filesystem::exists(bindir) && filesystem::is_directory(bindir)) {
+        } else {
+            system(createbindir.c_str());
+            cerr << "Setting up bin dir." << endl;
+            return 1;
+        }
 
+        // config
+        string bconfigfile = bconfigin; 
+
+        if (filesystem::exists(bconfigfile) && filesystem::is_regular_file(bconfigfile)) {
+            bconfig = argv[2];
+
+        } else {
+            while (!(filesystem::exists(bconfigfile) && filesystem::is_regular_file(bconfigfile))) {
+                cout << "Invalid config file: " << bconfigfile << endl;
+                cout << "Please enter a valid config: ";
+                cin >> bconfigfile;
+
+                // No need to redeclare bconfigfile here; it will update the outer variable
+                bconfig = bconfigfile.c_str();
+            }
+
+        }
+
+        // executable
         cout << "What do you want to call your executable?: ";
         cin >> bexeout;
-        
-        bexe = bexeout.c_str();
+        string bexefile = string(userHome) + "/.local/bin/" + bexeout; 
+
+        if (filesystem::exists(bexefile) && filesystem::is_regular_file(bexefile)) {
+
+            while (filesystem::exists(bexefile) && filesystem::is_regular_file(bexefile)) {
+                cout << "do you want to overwrite: " << bexeout << "? (y/n) ";
+                cin >> byn;
+
+                transform(byn.begin(), byn.end(), byn.begin(), ::tolower);
+
+                if (byn == "y") {
+                    bexe = bexeout.c_str();
+                    break;
+                } else if (byn == "n") {
+                    cout << "What do you want to call your executable?: ";
+                    cin >> bexeout;
+                    bexe = bexeout.c_str();
+                }
+            }
+
+        } else {
+            bexe = bexeout.c_str();
+        }
 
         system(("touch /home/$USER/.local/bin/" + string(bexe)).c_str());
         system(("chmod +x /home/$USER/.local/bin/" + string(bexe)).c_str());
