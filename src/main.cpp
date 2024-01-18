@@ -77,16 +77,30 @@ int main(int argc, char* argv[]) {
 
             setenv("LC_CTYPE", "", 1);
             string namesList;
+            vector<string> reversedNamesList;
+
+            bool isFirst = true;
+
 
             for (const auto& tableItem : *config) {
                 try {
                     Action a;
                     from_toml(*tableItem.second->as_table(), a);
-                    namesList += a.names + "\n";
+
+                    reversedNamesList.push_back(a.names);
+
                 } catch (const invalid_argument& e) {
                     cerr << invalidvalue.c_str() << e.what() << endl;
                     return 1;
                 }
+            }
+
+            reverse(reversedNamesList.begin(), reversedNamesList.end());
+            for (const auto& name : reversedNamesList) {
+                if (!namesList.empty()) {
+                    namesList += "\n";
+                }
+                namesList += name;
             }
 
             string rname    = config->get_table("runner")->get_as<string>("rname").value_or("dashboard:");
@@ -148,13 +162,8 @@ int main(int argc, char* argv[]) {
 
         cout << "What do you want to call your executable?: ";
         cin >> bexeout;
-
-        if (bexeout.empty()) {
-            cerr << "Error: Executable name cannot be empty." << endl;
-            return 1;
-        }
         
-        const char* bexe = bexeout.c_str();
+        bexe = bexeout.c_str();
 
         system(("touch /home/$USER/.local/bin/" + string(bexe)).c_str());
         system(("chmod +x /home/$USER/.local/bin/" + string(bexe)).c_str());
