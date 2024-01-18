@@ -26,24 +26,15 @@ const string invalidconfig  = R"#(Not a valid config: )#";
 
 
 struct Action {
-    string rnames;
-    string rdescription;
-    string rcommand;
     string names;
     string description;
     string command;
 
     Action(
-        const string& rnms  = "", 
-        const string& rdesc = "", 
-        const string& rcmd  = "", 
         const string& nms   = "", 
         const string& desc  = "", 
         const string& cmd   = "")
         :
-        rnames(rnms),
-        rdescription(rdesc),
-        rcommand(rcmd),
         names(nms), 
         description(desc), 
         command(cmd) {}
@@ -51,9 +42,6 @@ struct Action {
 
 void from_toml(const table& t, Action& a) {
     try {
-        a.rnames        = *t.get_as<string>("rnames");
-        a.rdescription  = *t.get_as<string>("rdescription");
-        a.rcommand      = *t.get_as<string>("rcommand");
         a.names         = *t.get_as<string>("names");
         a.description   = *t.get_as<string>("description");
         a.command       = *t.get_as<string>("command");
@@ -63,10 +51,10 @@ void from_toml(const table& t, Action& a) {
 }
 
 int main(int argc, char* argv[]) {
-    const char* configFile      = nullptr; 
-    const char* userHome        = getenv("HOME");
-    string rapidMenuPath        = string(userHome) + "/.config/RapidMenu";
-    string rapidcommand         = "mkdir -p " + rapidMenuPath;
+    const char* configFile  = nullptr; 
+    const char* userHome    = getenv("HOME");
+    string rapidMenuPath    = string(userHome) + "/.config/RapidMenu";
+    string rapidcommand     = "mkdir -p " + rapidMenuPath;
 
     if (argc > 1 && strcmp(argv[1], "-c") == 0) {
         if (argc < 3 || argv[2][0] == '-') {
