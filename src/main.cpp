@@ -177,14 +177,14 @@ int main(int argc, char* argv[]) {
         }
 
         // executable
-        cout << "What do you want to call your executable?: ";
+        cout << "What do you want to call your executable? ";
         cin >> bexeout;
         string bexefile = string(userHome) + "/.local/bin/" + bexeout; 
 
         if (filesystem::exists(bexefile) && filesystem::is_regular_file(bexefile)) {
 
             while (filesystem::exists(bexefile) && filesystem::is_regular_file(bexefile)) {
-                cout << "do you want to overwrite: " << bexeout << "? (y/n) ";
+                cout << "do you want to overwrite " << bexeout << "? (y/n) ";
                 cin >> byn;
 
                 transform(byn.begin(), byn.end(), byn.begin(), ::tolower);
@@ -193,7 +193,7 @@ int main(int argc, char* argv[]) {
                     bexe = bexeout.c_str();
                     break;
                 } else if (byn == "n") {
-                    cout << "What do you want to call your executable?: ";
+                    cout << "What do you want to call your executable? ";
                     cin >> bexeout;
                     bexe = bexeout.c_str();
                 }
