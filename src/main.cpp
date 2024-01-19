@@ -12,6 +12,7 @@
 
 using namespace std;
 using namespace cpptoml;
+
 const string USAGE = R"#(usage:  RapidMenu [flags] [<command> [args]]
 LISTING COMMANDS:
     -c:           To specify which config to use.
@@ -71,11 +72,9 @@ int main(int argc, char* argv[]) {
         try {
             auto config = parse_file(configFile);
 
-            setenv("LC_CTYPE", "", 1);
+            setenv("LC_CTYPE", "en_US.UTF-8", 1);
             string namesList;
             vector<string> reversedNamesList;
-
-            bool isFirst = true;
 
             for (const auto& tableItem : *config) {
                 try {
@@ -91,12 +90,16 @@ int main(int argc, char* argv[]) {
             }
 
             reverse(reversedNamesList.begin(), reversedNamesList.end());
+            ostringstream namesStream;
+
             for (const auto& name : reversedNamesList) {
-                if (!namesList.empty()) {
-                    namesList += "\n";
+                if (!namesStream.str().empty()) {
+                    namesStream << "\n";
                 }
-                namesList += name;
+                namesStream << name;
             }
+
+            namesList = namesStream.str();
 
             string rname    = config->get_table("runner")->get_as<string>("rname").value_or("dashboard:");
             string rtheme   = config->get_table("runner")->get_as<string>("rtheme").value_or("");
