@@ -20,7 +20,6 @@ LISTING COMMANDS:
 )#";
 
 const string invalidvalue   = R"#(Invalid value in config: )#";
-const string egc            = R"#(Invalid command in config: )#";
 const string invalidconfig  = R"#(Not a valid config: )#";
 
 struct Action {
@@ -128,10 +127,8 @@ int main(int argc, char* argv[]) {
                         cout << a.description << endl;
 
                         if (bashResult != 0) {
-                            cerr << egc.c_str() << a.command << endl;
+                            cerr << invalidvalue.c_str() << a.command << endl;
                         }
-
-                        return 0;
                     }
                 } catch (const invalid_argument& e) {
                     cerr << invalidvalue.c_str() << e.what() << endl;
