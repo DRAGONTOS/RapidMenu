@@ -79,7 +79,6 @@ int main(int argc, char* argv[]) {
 
             bool isFirst = true;
 
-
             for (const auto& tableItem : *config) {
                 try {
                     Action a;
