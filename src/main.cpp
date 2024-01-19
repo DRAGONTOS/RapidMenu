@@ -2,7 +2,6 @@
 #include <filesystem>
 #include <algorithm>
 #include <cctype>
-#include <fstream>
 #include <string>
 #include <cstdio>
 #include <cstdlib>
@@ -13,7 +12,6 @@
 
 using namespace std;
 using namespace cpptoml;
-
 const string USAGE = R"#(usage:  RapidMenu [flags] [<command> [args]]
 LISTING COMMANDS:
     -c:           To specify which config to use.
@@ -23,7 +21,6 @@ LISTING COMMANDS:
 const string invalidvalue   = R"#(Invalid value in config: )#";
 const string egc            = R"#(Invalid command in config: )#";
 const string invalidconfig  = R"#(Not a valid config: )#";
-
 
 struct Action {
     string names;
@@ -144,6 +141,7 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
+    // executable 
     } else if (argc > 1 && strcmp(argv[1], "-b") == 0) {
         if (argc < 3 || argv[2][0] == '-') {
             cerr << USAGE.c_str() << endl;
