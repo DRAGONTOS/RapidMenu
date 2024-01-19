@@ -97,9 +97,9 @@ int main(int argc, char* argv[]) {
                 namesList += name;
             }
 
-            string rname    = config->get_table("runner")->get_as<string>("rname").value_or("dashboard:");
+            string rname    = config->get_table("runner")->get_as<string>("rname").value_or("");
             string rtheme   = config->get_table("runner")->get_as<string>("rtheme").value_or("");
-            string rcommand = config->get_table("runner")->get_as<string>("rcommand").value_or("rofi -dmenu -p");
+            string rcommand = config->get_table("runner")->get_as<string>("rcommand").value_or("rofi -dmenu");
 
             string rofiCommand = "printf '" + namesList + "' | " + rcommand + " '" + rname + " ' " + rtheme;
             FILE *rofiProcess = popen(rofiCommand.c_str(), "r");
@@ -172,15 +172,8 @@ int main(int argc, char* argv[]) {
             bconfig = argv[2];
 
         } else {
-            while (!(filesystem::exists(bconfigfile) && filesystem::is_regular_file(bconfigfile))) {
-                cout << "Invalid config file: " << bconfigfile << endl;
-                cout << "Please enter a valid config: ";
-                cin >> bconfigfile;
-
-                // No need to redeclare bconfigfile here; it will update the outer variable
-                bconfig = bconfigfile.c_str();
-            }
-
+            cerr << invalidconfig << bconfigfile << endl;
+            return 1;
         }
 
         // executable
