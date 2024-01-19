@@ -48,17 +48,18 @@ void from_toml(const table& t, Action& a) {
 }
 
 int main(int argc, char* argv[]) {
-    const char* configFile  = nullptr; 
-    const char* userHome    = getenv("HOME");
-    string rapidMenuPath    = string(userHome) + "/.config/RapidMenu";
-    string rapidcommand     = "mkdir -p " + rapidMenuPath;
-
     if (argc > 1 && strcmp(argv[1], "-c") == 0) {
         if (argc < 3 || argv[2][0] == '-') {
             cerr << USAGE.c_str() << endl;
             return 1;
         }
-        configFile = argv[2];
+
+        const char* configFile  = nullptr; 
+        const char* userHome    = getenv("HOME");
+        string rapidMenuPath    = string(userHome) + "/.config/RapidMenu";
+        string rapidcommand     = "mkdir -p " + rapidMenuPath;
+
+        configFile              = argv[2];
 
         if (filesystem::exists(rapidMenuPath) && filesystem::is_directory(rapidMenuPath)) {
         } else {
@@ -97,9 +98,9 @@ int main(int argc, char* argv[]) {
                 namesList += name;
             }
 
-            string rname    = config->get_table("runner")->get_as<string>("rname").value_or("");
+            string rname    = config->get_table("runner")->get_as<string>("rname").value_or("dashboard:");
             string rtheme   = config->get_table("runner")->get_as<string>("rtheme").value_or("");
-            string rcommand = config->get_table("runner")->get_as<string>("rcommand").value_or("rofi -dmenu");
+            string rcommand = config->get_table("runner")->get_as<string>("rcommand").value_or("rofi -dmenu -p");
 
             string rofiCommand = "printf '" + namesList + "' | " + rcommand + " '" + rname + " ' " + rtheme;
             FILE *rofiProcess = popen(rofiCommand.c_str(), "r");
@@ -134,7 +135,6 @@ int main(int argc, char* argv[]) {
                     return 1;
                 }
             }
-            cout << "Invalid choice. Please enter a valid option." << endl;
 
         } catch (const parse_exception& e) {
             cerr << "Incorrect config file: " << endl;
@@ -172,19 +172,26 @@ int main(int argc, char* argv[]) {
             bconfig = argv[2];
 
         } else {
-            cerr << invalidconfig << bconfigfile << endl;
-            return 1;
+            while (!(filesystem::exists(bconfigfile) && filesystem::is_regular_file(bconfigfile))) {
+                cout << "Invalid config file: " << bconfigfile << endl;
+                cout << "Please enter a valid config: ";
+                cin >> bconfigfile;
+
+                // No need to redeclare bconfigfile here; it will update the outer variable
+                bconfig = bconfigfile.c_str();
+            }
+
         }
 
         // executable
-        cout << "What do you want to call your executable? ";
+        cout << "What do you want to call your executable?: ";
         cin >> bexeout;
         string bexefile = string(userHome) + "/.local/bin/" + bexeout; 
 
         if (filesystem::exists(bexefile) && filesystem::is_regular_file(bexefile)) {
 
             while (filesystem::exists(bexefile) && filesystem::is_regular_file(bexefile)) {
-                cout << "do you want to overwrite " << bexeout << "? (y/n) ";
+                cout << "do you want to overwrite: " << bexeout << "? (y/n) ";
                 cin >> byn;
 
                 transform(byn.begin(), byn.end(), byn.begin(), ::tolower);
@@ -193,7 +200,7 @@ int main(int argc, char* argv[]) {
                     bexe = bexeout.c_str();
                     break;
                 } else if (byn == "n") {
-                    cout << "What do you want to call your executable? ";
+                    cout << "What do you want to call your executable?: ";
                     cin >> bexeout;
                     bexe = bexeout.c_str();
                 }
@@ -203,15 +210,14 @@ int main(int argc, char* argv[]) {
             bexe = bexeout.c_str();
         }
 
-        system(("touch /home/$USER/.local/bin/" + string(bexe)).c_str());
-        system(("chmod +x /home/$USER/.local/bin/" + string(bexe)).c_str());
-        system(("echo '#!/usr/bin/env bash' > /home/$USER/.local/bin/" + string(bexe)).c_str());
-        system(("echo 'RapidMenu -c " + string(bconfig) + "' >> /home/$USER/.local/bin/" + string(bexe)).c_str());
+        system(("touch " + bexefile + string(bexe)).c_str());
+        system(("chmod +x " + bexefile + string(bexe)).c_str());
+        system(("echo '#!/usr/bin/env bash' > " + bexefile + string(bexe)).c_str());
+        system(("echo 'RapidMenu -c " + string(bconfig) + "' >> " + string(bexe)).c_str());
 
         }else{
             cerr << USAGE.c_str() << endl;
-            return 0;
+            return 1;
     }
-
     return 0;
 }
