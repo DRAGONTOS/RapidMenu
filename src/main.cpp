@@ -90,7 +90,6 @@ int main(int argc, char* argv[]) {
 
             reverse(reversedNamesList.begin(), reversedNamesList.end());
             ostringstream namesStream;
-
             for (const auto& name : reversedNamesList) {
                 if (!namesStream.str().empty()) {
                     namesStream << "\n";
@@ -104,8 +103,8 @@ int main(int argc, char* argv[]) {
             string rtheme   = config->get_table("runner")->get_as<string>("rtheme").value_or("");
             string rcommand = config->get_table("runner")->get_as<string>("rcommand").value_or("rofi -dmenu -p");
 
-            string rofiCommand = "printf '" + namesList + "' | " + rcommand + " '" + rname + " ' " + rtheme;
-            FILE *rofiProcess = popen(rofiCommand.c_str(), "r");
+            string rofiCommand  = "printf '" + namesList + "' | " + rcommand + " '" + rname + " ' " + rtheme;
+            FILE *rofiProcess   = popen(rofiCommand.c_str(), "r");
 
             char buffer[256];
             string userChoice;
@@ -115,7 +114,6 @@ int main(int argc, char* argv[]) {
             }
 
             userChoice.erase(remove_if(userChoice.begin(), userChoice.end(), [](char c) { return c == '\n'; }), userChoice.end());
-
             for (const auto& tableItem : *config) {
                 try {
                     const auto& table = tableItem.second->as_table();
@@ -167,7 +165,6 @@ int main(int argc, char* argv[]) {
 
         // config
         string bconfigfile = bconfigin; 
-
         if (filesystem::exists(bconfigfile) && filesystem::is_regular_file(bconfigfile)) {
             bconfig = argv[2];
 
@@ -177,7 +174,6 @@ int main(int argc, char* argv[]) {
                 cout << "Please enter a valid config: ";
                 cin >> bconfigfile;
 
-                // No need to redeclare bconfigfile here; it will update the outer variable
                 bconfig = bconfigfile.c_str();
             }
 
@@ -189,7 +185,6 @@ int main(int argc, char* argv[]) {
         string bexefile = string(userHome) + "/.local/bin/" + bexeout; 
 
         if (filesystem::exists(bexefile) && filesystem::is_regular_file(bexefile)) {
-
             while (filesystem::exists(bexefile) && filesystem::is_regular_file(bexefile)) {
                 cout << "do you want to overwrite: " << bexeout << "? (y/n) ";
                 cin >> byn;
