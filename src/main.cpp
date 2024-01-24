@@ -48,6 +48,20 @@ void from_toml(const table& t, Action& a) {
 }
 
 int main(int argc, char* argv[]) {
+
+    const char* userHome    = getenv("HOME");
+
+    string rapidMenuPath    = string(userHome) + "/.config/RapidMenu";
+    string rapidcommand     = "mkdir -p " + rapidMenuPath;
+
+    if (filesystem::exists(rapidMenuPath) && filesystem::is_directory(rapidMenuPath)) {
+    } else {
+        system(rapidcommand.c_str());
+        cerr << "Setting up the config directory: " << rapidMenuPath << endl;
+        return 1;
+    }
+
+
     if (argc > 1 && strcmp(argv[1], "-c") == 0) {
         if (argc < 3 || argv[2][0] == '-') {
             cerr << USAGE.c_str() << endl;
@@ -55,9 +69,6 @@ int main(int argc, char* argv[]) {
         }
 
         const char* configFile  = nullptr; 
-        const char* userHome    = getenv("HOME");
-        string rapidMenuPath    = string(userHome) + "/.config/RapidMenu";
-        string rapidcommand     = "mkdir -p " + rapidMenuPath;
 
         configFile              = argv[2];
 
