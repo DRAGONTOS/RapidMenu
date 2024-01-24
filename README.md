@@ -2,7 +2,7 @@
 Utilize configuration files to create runner scripts.
 
 # Requirements
-- tomlplusplus
+- cpptoml
 - a runner like rofi, dmenu etc
 
 # Installing
