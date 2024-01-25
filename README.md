@@ -19,6 +19,12 @@ LISTING COMMANDS:
     -c:           To specify which config to use.
     -b:           Make a executable out of a config.
 ```
+### You will need first to setup the config dir
+To do that you just need to, use this command.
+```
+RapidMenu
+```
+And it should say "created dir".
 ### How to use (-c) 
 If you want to open a configuration, just use this command.
 ```

@@ -72,13 +72,6 @@ int main(int argc, char* argv[]) {
 
         configFile              = argv[2];
 
-        if (filesystem::exists(rapidMenuPath) && filesystem::is_directory(rapidMenuPath)) {
-        } else {
-            system(rapidcommand.c_str());
-            cerr << "Setting up config." << endl;
-            return 1;
-        }
-
         try {
             auto config = parse_file(configFile);
 
