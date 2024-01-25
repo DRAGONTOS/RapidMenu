@@ -31,7 +31,7 @@ If you want to open a configuration, just use this command.
 RapidMenu -c [config]
 ```
 You should put the config files in the config dir. So, if you want
-to make a dashboard, then call it dashboard.conf. For games, use games.conf.
+to make a dashboard, then call it dashboard.conf. For games, use games.conf etc.
 ### How to use (-b)
 Just use this command, it will throw an error if incorrect.
 Also, it will ask what you want to name the executable, and if it already exists.
