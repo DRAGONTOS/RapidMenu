@@ -1,222 +1,230 @@
-#include <iostream>
-#include <filesystem>
 #include <algorithm>
 #include <cctype>
-#include <string>
+#include <cpptoml.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <algorithm>
+#include <filesystem>
+#include <iostream>
 #include <stdexcept>
-#include <cpptoml.h>
+#include <string>
 
-using namespace std;
-using namespace cpptoml;
-
-const string USAGE = R"#(usage:  RapidMenu [flags] [<command> [args]]
+const std::string USAGE = R"#(usage:  RapidMenu [flags] [<command> [args]]
 LISTING COMMANDS:
     -c:           To specify which config to use.
     -b:           Make a executable out of a config.
 )#";
 
-const string invalidvalue   = R"#(Invalid value in config: )#";
-const string invalidconfig  = R"#(Not a valid config: )#";
+const std::string invalidvalue  = R"#(Invalid value in config: )#";
+const std::string invalidconfig = R"#(Not a valid config: )#";
 
 struct Action {
-    string names;
-    string description;
-    string command;
+  std::string names;
+  std::string description;
+  std::string command;
 
-    Action(
-        const string& nms   = "", 
-        const string& desc  = "", 
-        const string& cmd   = "")
-        :
-        names(nms), 
-        description(desc), 
-        command(cmd) {}
+  Action(const std::string &nms = "", const std::string &desc = "",
+         const std::string &cmd = "")
+      : names(nms), description(desc), command(cmd) {}
 };
 
-void from_toml(const table& t, Action& a) {
-    try {
-        a.names         = *t.get_as<string>("names");
-        a.description   = *t.get_as<string>("description");
-        a.command       = *t.get_as<string>("command");
-    } catch (const parse_exception& e) {
-        throw invalid_argument(invalidvalue.c_str());
-    }
+void from_toml(const cpptoml::table &t, Action &a) {
+  try {
+    a.names       = *t.get_as<std::string>("names");
+    a.description = *t.get_as<std::string>("description");
+    a.command     = *t.get_as<std::string>("command");
+  } catch (const cpptoml::parse_exception &e) {
+    throw std::invalid_argument(invalidvalue.c_str());
+  }
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
+  std::vector<std::string> args(argv, argv + argc);
 
-    const char* userHome    = getenv("HOME");
+  const std::string userHome = std::getenv("HOME");
 
-    string rapidMenuPath    = string(userHome) + "/.config/RapidMenu";
-    string rapidcommand     = "mkdir -p " + rapidMenuPath;
+  std::string rapidMenuPath = std::string(userHome) + "/.config/RapidMenu";
+  std::string rapidcommand  = "mkdir -p " + rapidMenuPath;
 
-    if (filesystem::exists(rapidMenuPath) && filesystem::is_directory(rapidMenuPath)) {
-    } else {
-        system(rapidcommand.c_str());
-        cerr << "Setting up the config directory: " << rapidMenuPath << endl;
-        return 1;
+  if (std::filesystem::exists(rapidMenuPath) &&
+      std::filesystem::is_directory(rapidMenuPath)) {
+  } else {
+    system(rapidcommand.c_str());
+    std::cerr << "Setting up the config directory: " << rapidMenuPath;
+    return 1;
+  }
+
+  if (argc > 1 && strcmp(argv[1], "-c") == 0) {
+    if (argc < 3 || argv[2][0] == '-') {
+      std::cerr << USAGE.c_str();
+      return 1;
     }
 
+    const char *configFile = nullptr;
 
-    if (argc > 1 && strcmp(argv[1], "-c") == 0) {
-        if (argc < 3 || argv[2][0] == '-') {
-            cerr << USAGE.c_str() << endl;
-            return 1;
-        }
+    configFile = argv[2];
 
-        const char* configFile  = nullptr; 
+    try {
+      auto config = cpptoml::parse_file(configFile);
 
-        configFile              = argv[2];
+      setenv("LC_CTYPE", "en_US.UTF-8", 1);
+      std::string namesList;
+      std::vector<std::string> reversedNamesList;
 
+      for (const auto &tableItem : *config) {
         try {
-            auto config = parse_file(configFile);
+          Action a;
+          from_toml(*tableItem.second->as_table(), a);
 
-            setenv("LC_CTYPE", "en_US.UTF-8", 1);
-            string namesList;
-            vector<string> reversedNamesList;
+          reversedNamesList.push_back(a.names);
 
-            for (const auto& tableItem : *config) {
-                try {
-                    Action a;
-                    from_toml(*tableItem.second->as_table(), a);
-
-                    reversedNamesList.push_back(a.names);
-
-                } catch (const invalid_argument& e) {
-                    cerr << invalidvalue.c_str() << e.what() << endl;
-                    return 1;
-                }
-            }
-
-            reverse(reversedNamesList.begin(), reversedNamesList.end());
-            ostringstream namesStream;
-            for (const auto& name : reversedNamesList) {
-                if (!namesStream.str().empty()) {
-                    namesStream << "\n";
-                }
-                namesStream << name;
-            }
-
-            namesList = namesStream.str();
-
-            string rname    = config->get_table("runner")->get_as<string>("rname").value_or("dashboard:");
-            string rtheme   = config->get_table("runner")->get_as<string>("rtheme").value_or("");
-            string rcommand = config->get_table("runner")->get_as<string>("rcommand").value_or("rofi -dmenu -p");
-
-            string rofiCommand  = "printf '" + namesList + "' | " + rcommand + " '" + rname + " ' " + rtheme;
-            FILE *rofiProcess   = popen(rofiCommand.c_str(), "r");
-
-            char buffer[256];
-            string userChoice;
-
-            while (fgets(buffer, sizeof(buffer), rofiProcess)) {
-                userChoice += buffer;
-            }
-
-            userChoice.erase(remove_if(userChoice.begin(), userChoice.end(), [](char c) { return c == '\n'; }), userChoice.end());
-            for (const auto& tableItem : *config) {
-                try {
-                    const auto& table = tableItem.second->as_table();
-                    if (table->get_as<string>("names").value_or("") == userChoice) {
-
-                        Action a;
-                        from_toml(*table, a);
-                        int bashResult = system(a.command.c_str());
-                        cout << a.description << endl;
-
-                        if (bashResult != 0) {
-                            cerr << invalidvalue.c_str() << a.command << endl;
-                        }
-                    }
-                } catch (const invalid_argument& e) {
-                    cerr << invalidvalue.c_str() << e.what() << endl;
-                    return 1;
-                }
-            }
-
-        } catch (const parse_exception& e) {
-            cerr << "Incorrect config file: " << endl;
-            return 1;
+        } catch (const std::invalid_argument &e) {
+          std::cerr << invalidvalue.c_str() << e.what();
+          return 1;
         }
+      }
 
-    // executable 
-    } else if (argc > 1 && strcmp(argv[1], "-b") == 0) {
-        if (argc < 3 || argv[2][0] == '-') {
-            cerr << USAGE.c_str() << endl;
-            return 1;
+      reverse(reversedNamesList.begin(), reversedNamesList.end());
+      std::ostringstream namesStream;
+      for (const auto &name : reversedNamesList) {
+        if (!namesStream.str().empty()) {
+          namesStream << "\n";
         }
+        namesStream << name;
+      }
 
-        const char* bconfig     = nullptr;
-        const char* bexe        = nullptr;
-        const char* userHome    = getenv("HOME");
+      namesList = namesStream.str();
 
-        string bexeout;
-        string byn;
-        string bconfigin        = argv[2];
-        string bindir           = string(userHome) + "/.local/bin";
-        string createbindir     = "mkdir -p " + bindir;
+      std::string rname  =
+          config->get_table("runner")->get_as<std::string>("rname").value_or(
+              "dashboard:");
+      std::string rtheme =
+          config->get_table("runner")->get_as<std::string>("rtheme").value_or(
+              "");
+      std::string rcommand    = config->get_table("runner")
+                                 ->get_as<std::string>("rcommand")
+                                 .value_or("rofi -dmenu -p");
 
-        if (filesystem::exists(bindir) && filesystem::is_directory(bindir)) {
-        } else {
-            system(createbindir.c_str());
-            cerr << "Setting up bin dir." << endl;
-            return 1;
-        }
+      std::string rofiCommand = "printf '" + namesList + "' | " + rcommand +
+                                " '" + rname + " ' " + rtheme;
+      std::FILE *rofiProcess  = popen(rofiCommand.c_str(), "r");
 
-        // config
-        string bconfigfile = bconfigin; 
-        if (filesystem::exists(bconfigfile) && filesystem::is_regular_file(bconfigfile)) {
-            bconfig = argv[2];
+      char buffer[256];
+      std::string userChoice;
 
-        } else {
-            while (!(filesystem::exists(bconfigfile) && filesystem::is_regular_file(bconfigfile))) {
-                cout << "Invalid config file: " << bconfigfile << endl;
-                cout << "Please enter a valid config: ";
-                cin >> bconfigfile;
+      while (fgets(buffer, sizeof(buffer), rofiProcess)) {
+        userChoice += buffer;
+      }
 
-                bconfig = bconfigfile.c_str();
+      userChoice.erase(remove_if(userChoice.begin(), userChoice.end(),
+                                 [](char c) { return c == '\n'; }),
+                       userChoice.end());
+      for (const auto &tableItem : *config) {
+        try {
+          const auto &table = tableItem.second->as_table();
+          if (table->get_as<std::string>("names").value_or("") == userChoice) {
+
+            Action a;
+            from_toml(*table, a);
+            int bashResult = system(a.command.c_str());
+            std::cout << a.description;
+
+            if (bashResult != 0) {
+              std::cerr << invalidvalue.c_str() << a.command;
             }
-
+          }
+        } catch (const std::invalid_argument &e) {
+          std::cerr << invalidvalue.c_str() << e.what();
+          return 1;
         }
+      }
 
-        // executable
-        cout << "What do you want to call your executable?: ";
-        cin >> bexeout;
-        string bexefile = string(userHome) + "/.local/bin/" + bexeout; 
-
-        if (filesystem::exists(bexefile) && filesystem::is_regular_file(bexefile)) {
-            while (filesystem::exists(bexefile) && filesystem::is_regular_file(bexefile)) {
-                cout << "do you want to overwrite: " << bexeout << "? (y/n) ";
-                cin >> byn;
-
-                transform(byn.begin(), byn.end(), byn.begin(), ::tolower);
-
-                if (byn == "y") {
-                    bexe = bexeout.c_str();
-                    break;
-                } else if (byn == "n") {
-                    cout << "What do you want to call your executable?: ";
-                    cin >> bexeout;
-                    bexe = bexeout.c_str();
-                }
-            }
-
-        } else {
-            bexe = bexeout.c_str();
-        }
-
-        system(("touch " + bexefile + string(bexe)).c_str());
-        system(("chmod +x " + bexefile + string(bexe)).c_str());
-        system(("echo '#!/usr/bin/env bash' > " + bexefile + string(bexe)).c_str());
-        system(("echo 'RapidMenu -c " + string(bconfig) + "' >> " + string(bexe)).c_str());
-
-        }else{
-            cerr << USAGE.c_str() << endl;
-            return 1;
+    } catch (const cpptoml::parse_exception &e) {
+      std::cerr << "Incorrect config file: ";
+      return 1;
     }
-    return 0;
+
+    // executable
+  } else if (argc > 1 && strcmp(argv[1], "-b") == 0) {
+    if (argc < 3 || argv[2][0] == '-') {
+      std::cerr << USAGE.c_str();
+      return 1;
+    }
+
+    const char *bconfig        = nullptr;
+    const char *bexe           = nullptr;
+    const std::string userHome = std::getenv("HOME");
+
+    std::string bexeout;
+    std::string byn;
+    std::string bconfigin    = argv[2];
+    std::string bindir       = std::string(userHome) + "/.local/bin";
+    std::string createbindir = "mkdir -p " + bindir;
+
+    if (std::filesystem::exists(bindir) &&
+        std::filesystem::is_directory(bindir)) {
+    } else {
+      system(createbindir.c_str());
+      std::cerr << "Setting up bin dir.";
+      return 1;
+    }
+
+    // config
+    std::string bconfigfile = bconfigin;
+    if (std::filesystem::exists(bconfigfile) &&
+        std::filesystem::is_regular_file(bconfigfile)) {
+      bconfig = argv[2];
+
+    } else {
+      while (!(std::filesystem::exists(bconfigfile) &&
+               std::filesystem::is_regular_file(bconfigfile))) {
+        std::cout << "Invalid config file: " << bconfigfile;
+        std::cout << "Please enter a valid config: ";
+        std::cin >> bconfigfile;
+
+        bconfig = bconfigfile.c_str();
+      }
+    }
+
+    // executable
+    std::cout << "What do you want to call your executable?: ";
+    std::cin >> bexeout;
+    std::string bexefile = std::string(userHome) + "/.local/bin/" + bexeout;
+
+    if (std::filesystem::exists(bexefile) &&
+        std::filesystem::is_regular_file(bexefile)) {
+      while (std::filesystem::exists(bexefile) &&
+             std::filesystem::is_regular_file(bexefile)) {
+        std::cout << "do you want to overwrite: " << bexeout << "? (y/n) ";
+        std::cin >> byn;
+
+        transform(byn.begin(), byn.end(), byn.begin(), ::tolower);
+
+        if (byn == "y") {
+          bexe = bexeout.c_str();
+          break;
+        } else if (byn == "n") {
+          std::cout << "What do you want to call your executable?: ";
+          std::cin >> bexeout;
+          bexe = bexeout.c_str();
+        }
+      }
+
+    } else {
+      bexe = bexeout.c_str();
+    }
+
+    system(("touch " + bexefile + std::string(bexe)).c_str());
+    system(("chmod +x " + bexefile + std::string(bexe)).c_str());
+    system(("echo '#!/usr/bin/env bash' > " + bexefile + std::string(bexe))
+               .c_str());
+    system(("echo 'RapidMenu -c " + std::string(bconfig) + "' >> " +
+            std::string(bexe))
+               .c_str());
+
+  } else {
+    std::cerr << USAGE.c_str();
+    return 1;
+  }
+  return 0;
 }
