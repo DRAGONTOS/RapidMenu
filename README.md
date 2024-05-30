@@ -21,6 +21,14 @@ cpack -G RPM
 sudo rpm -i *.rpm
 ```
 
+Using deb:
+```
+make all
+cd build
+cpack -G deb 
+sudo dpkg -i *.deb
+```
+
 # Usage
 
 ## Help message

@@ -15,6 +15,15 @@ find_package(tomlplusplus REQUIRED)
 target_link_libraries(RapidMenu PRIVATE tomlplusplus::tomlplusplus)
 
 
+# DEBIAN
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "DRAGONTOS")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libcpptoml-dev")
+set(CPACK_DEBIAN_PACKAGE_LICENSE "GPLv3")
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "Utilize configuration files to create runner scripts.")
+set(CPACK_DEBIAN_PACKAGE_RELEASE_DIST ON)
+set(CPACK_GENERATOR DEBIAN)
+set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
+# RPM
 set(CPACK_PACKAGE_VENDOR "DRAGONTOS")
 set(CPACK_RPM_PACKAGE_REQUIRES "tomlplusplus-devel")
 set(CPACK_RPM_PACKAGE_LICENSE "GPLv3")
