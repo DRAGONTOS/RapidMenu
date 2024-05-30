@@ -6,10 +6,19 @@ Utilize configuration files to create runner scripts.
 - a runner like rofi, dmenu etc
 
 # Installing
-Just run this.
+
+From source:
 ```
 make all
 sudo make install
+```
+
+Using rpm:
+```
+make all
+cd build
+cpack -G RPM 
+sudo rpm -i *.rpm
 ```
 
 # Usage

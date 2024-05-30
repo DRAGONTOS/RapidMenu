@@ -8,8 +8,19 @@ file(GLOB_RECURSE RAPID_MENU_SOURCE_FILES "src/*.cpp")
 
 # Add the executable target for RapidMenu
 add_executable(RapidMenu ${RAPID_MENU_SOURCE_FILES})
+install(TARGETS RapidMenu DESTINATION bin)
 
 # Find and link against the tomlplusplus library
 find_package(tomlplusplus REQUIRED)
 target_link_libraries(RapidMenu PRIVATE tomlplusplus::tomlplusplus)
 
+
+set(CPACK_PACKAGE_VENDOR "DRAGONTOS")
+set(CPACK_RPM_PACKAGE_REQUIRES "tomlplusplus-devel")
+set(CPACK_RPM_PACKAGE_LICENSE "GPLv3")
+set(CPACK_RPM_PACKAGE_DESCRIPTION "Utilize configuration files to create runner scripts.")
+set(CPACK_RPM_FILE_NAME "RPM-DEFAULT")
+set(CPACK_RPM_PACKAGE_RELEASE_DIST ON)
+set(CPACK_GENERATOR RPM)
+set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
+include(CPack)
