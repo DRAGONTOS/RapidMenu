@@ -1,7 +1,9 @@
+#include <ios>
 #include <iostream>
 #include <filesystem>
 #include <algorithm>
 #include <cctype>
+#include <limits>
 #include <string>
 #include <cstdio>
 #include <cstdlib>
@@ -9,6 +11,22 @@
 #include <algorithm>
 #include <stdexcept>
 #include <cpptoml.h>
+
+
+void clearBuffer(){
+  std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
+}
+
+inline void checkIfExtractionFailed(){
+  if (!std::cin){ // if previous extraction failed
+    if (std::cin.eof()){ // check if eof and if yes aborts the program
+      std::abort();
+    }
+  
+  std::cin.clear(); //put std::cin back into normal mode
+  clearBuffer();  // remove bad input
+  }
+}
 
 const std::string USAGE = R"#(usage:  RapidMenu [flags] [<command> [args]]
 LISTING COMMANDS:
@@ -171,10 +189,11 @@ int main(int argc, char* argv[]) {
 
         } else {
             while (!(std::filesystem::exists(bconfigfile) && std::filesystem::is_regular_file(bconfigfile))) {
-                std::cout << "Invalid config file: " << bconfigfile;
+                std::cout << "Invalid config file: " << bconfigfile << ' ';
                 std::cout << "Please enter a valid config: ";
                 std::cin >> bconfigfile;
-
+                checkIfExtractionFailed();
+                clearBuffer(); // clear extra input if entered
                 bconfig = bconfigfile.c_str();
             }
 
@@ -183,13 +202,16 @@ int main(int argc, char* argv[]) {
         // executable
         std::cout << "What do you want to call your executable?: ";
         std::cin >> bexeout;
+        checkIfExtractionFailed();
+        clearBuffer();
         std::string bexefile = std::string(userHome) + "/.local/bin/" + bexeout; 
 
         if (std::filesystem::exists(bexefile) && std::filesystem::is_regular_file(bexefile)) {
             while (std::filesystem::exists(bexefile) && std::filesystem::is_regular_file(bexefile)) {
                 std::cout << "do you want to overwrite: " << bexeout << "? (y/n) ";
                 std::cin >> byn;
-
+                checkIfExtractionFailed();
+                clearBuffer();
                 transform(byn.begin(), byn.end(), byn.begin(), ::tolower);
 
                 if (byn == "y") {
@@ -198,6 +220,8 @@ int main(int argc, char* argv[]) {
                 } else if (byn == "n") {
                     std::cout << "What do you want to call your executable?: ";
                     std::cin >> bexeout;
+                    checkIfExtractionFailed();
+                    clearBuffer();
                     bexe = bexeout.c_str();
                 }
             }
