@@ -3,6 +3,7 @@ Utilize configuration files to create runner scripts.
 
 # Requirements
 - cpptoml
+- tomlplusplus
 - a runner like rofi, dmenu etc
 
 # Installing
@@ -66,17 +67,18 @@ It is required to have the [runner] section in the configuration.
 Example:
 ```
 [runner]
-rname = "Dashboard:" (name if needed)
-rtheme = "-show-icons -theme ~/.config/rofi/themes/rounded-purple-dark.rasi" (theme if needed)
-rcommand = "rofi -dmenu -p" (dmenu, rofi, bemenu etc)
+rname = "Dashboard:" #(name if needed)
+rtheme = "-show-icons -theme ~/.config/rofi/themes/rounded-purple-dark.rasi" #(theme if needed)
+rcommand = "rofi -dmenu -p" #(dmenu, rofi, bemenu etc)
 ```
 An example of something to add to the configuration.
 ```
-[Disk] (To set the name)
-names = "Disk" (To set the in the runner)
-description = "You chose Disk." (No required but can be set)
-command = "kitty -e /home/$USER/.config/RapidMenu/hdd.bash" (bash command)
+[Disk] #(To set the name)
+names = "Disk" #(To set the name in the runner)
+description = "You chose Disk." #(Not required but can be set)
+command = "kitty -e /home/$USER/.config/RapidMenu/hdd.bash" #(bash command)
 ```
 
 # Contributors
 - DRAGONTOS
+- maukkis

@@ -18,13 +18,13 @@ void clearBuffer(){
 }
 
 inline void checkIfExtractionFailed(){
-  if (!std::cin){ // if previous extraction failed
-    if (std::cin.eof()){ // check if eof and if yes aborts the program
+  if (!std::cin){         // if previous extraction failed
+    if (std::cin.eof()){  // check if eof and if yes aborts the program
       std::abort();
     }
   
   std::cin.clear(); //put std::cin back into normal mode
-  clearBuffer();  // remove bad input
+  clearBuffer();    // remove bad input
   }
 }
 
