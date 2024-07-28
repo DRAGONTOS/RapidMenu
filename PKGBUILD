@@ -1,15 +1,9 @@
-# Maintainer:  WorMzy Tykashi <wormzy.tykashi@gmail.com>
-# Contributor: Dmitry Korzhevin <dkorzhevin AT gmail DOT com>
-# Contributor: C.Coutinho <kikijump[at]gmail[dot]com>
-# Contributor: Grigorios Bouzakis <grbzks[at]gmail[dot]com>
-# Contributor: TDY <tdy@gmx.com>
-
 pkgname=RapidMenu-git
 _gitname=RapidMenu
-pkgver=0.2.3
+pkgver=0.2.4
 pkgrel=1
-pkgdesc="A terminal multiplexer"
-url="https://github.com/tmux/tmux/wiki"
+pkgdesc="Utilize configuration files to create runner scripts."
+url="https://github.com/DRAGONTOS/RapidMenu"
 arch=('x86_64')
 license=('GPLv3')
 depends=('tomlplusplus' 'cpptoml')
