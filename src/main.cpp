@@ -1,30 +1,28 @@
-#include <ios>
-#include <iostream>
-#include <filesystem>
 #include <algorithm>
 #include <cctype>
-#include <limits>
-#include <string>
+#include <cpptoml.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <algorithm>
+#include <filesystem>
+#include <ios>
+#include <iostream>
+#include <limits>
 #include <stdexcept>
-#include <cpptoml.h>
+#include <string>
 
-
-void clearBuffer(){
-  std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
+void clearBuffer() {
+  std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
-inline void checkIfExtractionFailed(){
-  if (!std::cin){         // if previous extraction failed
-    if (std::cin.eof()){  // check if eof and if yes aborts the program
+inline void checkIfExtractionFailed() {
+  if (!std::cin) {        // if previous extraction failed
+    if (std::cin.eof()) { // check if eof and if yes aborts the program
       std::abort();
     }
-  
-  std::cin.clear(); //put std::cin back into normal mode
-  clearBuffer();    // remove bad input
+
+    std::cin.clear(); // put std::cin back into normal mode
+    clearBuffer();    // remove bad input
   }
 }
 
@@ -34,169 +32,193 @@ LISTING COMMANDS:
     -b:           Make a executable out of a config.
 )#";
 
-const std::string invalidvalue   = R"#(Invalid value in config: )#";
-const std::string invalidconfig  = R"#(Not a valid config: )#";
+const std::string invalidvalue = R"#(Invalid value in config: )#";
+const std::string invalidconfig = R"#(Not a valid config: )#";
 
 struct Action {
-    std::string names;
-    std::string description;
-    std::string command;
+  std::string names;
+  std::string description;
+  std::string command;
 
-    Action(
-        const std::string& nms   = "", 
-        const std::string& desc  = "", 
-        const std::string& cmd   = "")
-        :
-        names(nms), 
-        description(desc), 
-        command(cmd) {}
+  Action(const std::string &nms = "", const std::string &desc = "",
+         const std::string &cmd = "")
+      : names(nms), description(desc), command(cmd) {}
 };
 
-void from_toml(const cpptoml::table& t, Action& a) {
-    try {
-        a.names         = *t.get_as<std::string>("names");
-        a.description   = *t.get_as<std::string>("description");
-        a.command       = *t.get_as<std::string>("command");
-    } catch (const cpptoml::parse_exception& e) {
-        throw std::invalid_argument(invalidvalue.c_str());
-    }
+void from_toml(const cpptoml::table &t, Action &a) {
+  try {
+    a.names = *t.get_as<std::string>("names");
+    a.description = *t.get_as<std::string>("description");
+    a.command = *t.get_as<std::string>("command");
+  } catch (const cpptoml::parse_exception &e) {
+    throw std::invalid_argument(invalidvalue.c_str());
+  }
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char **argv, char **envp) {
 
-    const char* userHome    = getenv("HOME");
+  const char *userHome = getenv("HOME");
 
-    std::string rapidMenuPath    = std::string(userHome) + "/.config/RapidMenu";
-    std::string rapidcommand     = "mkdir -p " + rapidMenuPath;
+  std::string rapidMenuPath = std::string(userHome) + "/.config/RapidMenu";
+  std::string rapidcommand = "mkdir -p " + rapidMenuPath;
 
-    if (std::filesystem::exists(rapidMenuPath) && std::filesystem::is_directory(rapidMenuPath)) {
-    } else {
-        system(rapidcommand.c_str());
-        std::cerr << "Setting up the config directory: " << rapidMenuPath;
+  std::vector<std::string> ARGS{argv, argv + argc};
+  for (int i = 0; i < argc; ++i) {
+    ARGS[i] = std::string{argv[i]};
+  }
+
+  if (ARGS.size() < 2) {
+    std::cout << USAGE;
+    return 1;
+  }
+
+  if (std::filesystem::exists(rapidMenuPath) &&
+      std::filesystem::is_directory(rapidMenuPath)) {
+  } else {
+    system(rapidcommand.c_str());
+    std::cerr << "Setting up the config directory: " << rapidMenuPath;
+    return 1;
+  }
+
+  std::vector<std::string> command;
+  bool notify = false, verbose = false, force = false, noShallow = false;
+
+  for (int i = 1; i < argc; ++i) {
+    std::string arg = argv[i];
+    if (arg.find('-') == 0) {
+      if (ARGS[i] == "--help" || ARGS[i] == "-h") {
+        std::cout << USAGE;
         return 1;
-    }
-
-
-    if (argc > 1 && strcmp(argv[1], "-c") == 0) {
+      } else if (ARGS[i] == "-c") {
         if (argc < 3 || argv[2][0] == '-') {
             std::cerr << USAGE.c_str();
             return 1;
         }
+        const char *configFile = nullptr;
 
-        const char* configFile  = nullptr; 
-
-        configFile              = argv[2];
+        configFile = argv[2];
 
         try {
-            auto config = cpptoml::parse_file(configFile);
+          auto config = cpptoml::parse_file(configFile);
 
-            setenv("LC_CTYPE", "en_US.UTF-8", 1);
-            std::string namesList;
-            std::vector<std::string> reversedNamesList;
+          setenv("LC_CTYPE", "en_US.UTF-8", 1);
+          std::string namesList;
+          std::vector<std::string> reversedNamesList;
 
-            for (const auto& tableItem : *config) {
-                try {
-                    Action a;
-                    from_toml(*tableItem.second->as_table(), a);
+          for (const auto &tableItem : *config) {
+            try {
+              Action a;
+              from_toml(*tableItem.second->as_table(), a);
 
-                    reversedNamesList.push_back(a.names);
+              reversedNamesList.push_back(a.names);
 
-                } catch (const std::invalid_argument& e) {
-                    std::cerr << invalidvalue.c_str() << e.what();
-                    return 1;
+            } catch (const std::invalid_argument &e) {
+              std::cerr << invalidvalue.c_str() << e.what();
+              return 1;
+            }
+          }
+
+          reverse(reversedNamesList.begin(), reversedNamesList.end());
+          std::ostringstream namesStream;
+          for (const auto &name : reversedNamesList) {
+            if (!namesStream.str().empty()) {
+              namesStream << "\n";
+            }
+            namesStream << name;
+          }
+
+          namesList = namesStream.str();
+
+          std::string rname = config->get_table("runner")
+                                  ->get_as<std::string>("rname")
+                                  .value_or("dashboard:");
+          std::string rtheme = config->get_table("runner")
+                                   ->get_as<std::string>("rtheme")
+                                   .value_or("");
+          std::string rcommand = config->get_table("runner")
+                                     ->get_as<std::string>("rcommand")
+                                     .value_or("rofi -dmenu -p");
+
+          std::string rofiCommand = "printf '" + namesList + "' | " + rcommand +
+                                    " '" + rname + " ' " + rtheme;
+          FILE *rofiProcess = popen(rofiCommand.c_str(), "r");
+
+          char buffer[256];
+          std::string userChoice;
+
+          while (fgets(buffer, sizeof(buffer), rofiProcess)) {
+            userChoice += buffer;
+          }
+
+          userChoice.erase(remove_if(userChoice.begin(), userChoice.end(),
+                                     [](char c) { return c == '\n'; }),
+                           userChoice.end());
+          for (const auto &tableItem : *config) {
+            try {
+              const auto &table = tableItem.second->as_table();
+              if (table->get_as<std::string>("names").value_or("") ==
+                  userChoice) {
+
+                Action a;
+                from_toml(*table, a);
+                int bashResult = system(a.command.c_str());
+                std::cout << a.description;
+
+                if (bashResult != 0) {
+                  std::cerr << invalidvalue.c_str() << a.command;
                 }
+              }
+            } catch (const std::invalid_argument &e) {
+              std::cerr << invalidvalue.c_str() << e.what();
+              return 1;
             }
+          }
 
-            reverse(reversedNamesList.begin(), reversedNamesList.end());
-            std::ostringstream namesStream;
-            for (const auto& name : reversedNamesList) {
-                if (!namesStream.str().empty()) {
-                    namesStream << "\n";
-                }
-                namesStream << name;
-            }
-
-            namesList = namesStream.str();
-
-            std::string rname    = config->get_table("runner")->get_as<std::string>("rname").value_or("dashboard:");
-            std::string rtheme   = config->get_table("runner")->get_as<std::string>("rtheme").value_or("");
-            std::string rcommand = config->get_table("runner")->get_as<std::string>("rcommand").value_or("rofi -dmenu -p");
-
-            std::string rofiCommand  = "printf '" + namesList + "' | " + rcommand + " '" + rname + " ' " + rtheme;
-            FILE *rofiProcess   = popen(rofiCommand.c_str(), "r");
-
-            char buffer[256];
-            std::string userChoice;
-
-            while (fgets(buffer, sizeof(buffer), rofiProcess)) {
-                userChoice += buffer;
-            }
-
-            userChoice.erase(remove_if(userChoice.begin(), userChoice.end(), [](char c) { return c == '\n'; }), userChoice.end());
-            for (const auto& tableItem : *config) {
-                try {
-                    const auto& table = tableItem.second->as_table();
-                    if (table->get_as<std::string>("names").value_or("") == userChoice) {
-
-                        Action a;
-                        from_toml(*table, a);
-                        int bashResult = system(a.command.c_str());
-                        std::cout << a.description;
-
-                        if (bashResult != 0) {
-                            std::cerr << invalidvalue.c_str() << a.command;
-                        }
-                    }
-                } catch (const std::invalid_argument& e) {
-                    std::cerr << invalidvalue.c_str() << e.what();
-                    return 1;
-                }
-            }
-
-        } catch (const cpptoml::parse_exception& e) {
-            std::cerr << "Incorrect config file: ";
-            return 1;
+        } catch (const cpptoml::parse_exception &e) {
+          std::cerr << "Incorrect config file: ";
+          return 1;
         }
-
-    // executable 
-    } else if (argc > 1 && strcmp(argv[1], "-b") == 0) {
+        break;
+      } else if (ARGS[i] == "-b") {
         if (argc < 3 || argv[2][0] == '-') {
             std::cerr << USAGE.c_str();
             return 1;
         }
-
-        const char* bconfig     = nullptr;
-        const char* bexe        = nullptr;
-        const char* userHome    = getenv("HOME");
+        // executable
+        const char *bconfig = nullptr;
+        const char *bexe = nullptr;
+        const char *userHome = getenv("HOME");
 
         std::string bexeout;
         std::string byn;
-        std::string bconfigin        = argv[2];
-        std::string bindir           = std::string(userHome) + "/.local/bin";
-        std::string createbindir     = "mkdir -p " + bindir;
+        std::string bconfigin = argv[2];
+        std::string bindir = std::string(userHome) + "/.local/bin";
+        std::string createbindir = "mkdir -p " + bindir;
 
-        if (std::filesystem::exists(bindir) && std::filesystem::is_directory(bindir)) {
+        if (std::filesystem::exists(bindir) &&
+            std::filesystem::is_directory(bindir)) {
         } else {
-            system(createbindir.c_str());
-            std::cerr << "Setting up bin dir.";
-            return 1;
+          system(createbindir.c_str());
+          std::cerr << "Setting up bin dir.";
+          return 1;
         }
 
         // config
-        std::string bconfigfile = bconfigin; 
-        if (std::filesystem::exists(bconfigfile) && std::filesystem::is_regular_file(bconfigfile)) {
-            bconfig = argv[2];
+        std::string bconfigfile = bconfigin;
+        if (std::filesystem::exists(bconfigfile) &&
+            std::filesystem::is_regular_file(bconfigfile)) {
+          bconfig = argv[2];
 
         } else {
-            while (!(std::filesystem::exists(bconfigfile) && std::filesystem::is_regular_file(bconfigfile))) {
-                std::cout << "Invalid config file: " << bconfigfile << ' ';
-                std::cout << "Please enter a valid config: ";
-                std::cin >> bconfigfile;
-                checkIfExtractionFailed();
-                clearBuffer(); // clear extra input if entered
-                bconfig = bconfigfile.c_str();
-            }
-
+          while (!(std::filesystem::exists(bconfigfile) &&
+                   std::filesystem::is_regular_file(bconfigfile))) {
+            std::cout << "Invalid config file: " << bconfigfile << ' ';
+            std::cout << "Please enter a valid config: ";
+            std::cin >> bconfigfile;
+            checkIfExtractionFailed();
+            clearBuffer(); // clear extra input if entered
+            bconfig = bconfigfile.c_str();
+          }
         }
 
         // executable
@@ -204,40 +226,50 @@ int main(int argc, char* argv[]) {
         std::cin >> bexeout;
         checkIfExtractionFailed();
         clearBuffer();
-        std::string bexefile = std::string(userHome) + "/.local/bin/" + bexeout; 
+        std::string bexefile = std::string(userHome) + "/.local/bin/" + bexeout;
 
-        if (std::filesystem::exists(bexefile) && std::filesystem::is_regular_file(bexefile)) {
-            while (std::filesystem::exists(bexefile) && std::filesystem::is_regular_file(bexefile)) {
-                std::cout << "do you want to overwrite: " << bexeout << "? (y/n) ";
-                std::cin >> byn;
-                checkIfExtractionFailed();
-                clearBuffer();
-                transform(byn.begin(), byn.end(), byn.begin(), ::tolower);
+        if (std::filesystem::exists(bexefile) &&
+            std::filesystem::is_regular_file(bexefile)) {
+          while (std::filesystem::exists(bexefile) &&
+                 std::filesystem::is_regular_file(bexefile)) {
+            std::cout << "do you want to overwrite: " << bexeout << "? (y/n) ";
+            std::cin >> byn;
+            checkIfExtractionFailed();
+            clearBuffer();
+            transform(byn.begin(), byn.end(), byn.begin(), ::tolower);
 
-                if (byn == "y") {
-                    bexe = bexeout.c_str();
-                    break;
-                } else if (byn == "n") {
-                    std::cout << "What do you want to call your executable?: ";
-                    std::cin >> bexeout;
-                    checkIfExtractionFailed();
-                    clearBuffer();
-                    bexe = bexeout.c_str();
-                }
+            if (byn == "y") {
+              bexe = bexeout.c_str();
+              break;
+            } else if (byn == "n") {
+              std::cout << "What do you want to call your executable?: ";
+              std::cin >> bexeout;
+              checkIfExtractionFailed();
+              clearBuffer();
+              bexe = bexeout.c_str();
             }
+          }
 
         } else {
-            bexe = bexeout.c_str();
+          bexe = bexeout.c_str();
         }
 
         system(("touch " + bexefile + std::string(bexe)).c_str());
         system(("chmod +x " + bexefile + std::string(bexe)).c_str());
-        system(("echo '#!/usr/bin/env bash' > " + bexefile + std::string(bexe)).c_str());
-        system(("echo 'RapidMenu -c " + std::string(bconfig) + "' >> " + std::string(bexe)).c_str());
+        system(("echo '#!/usr/bin/env bash' > " + bexefile + std::string(bexe))
+                   .c_str());
+        system(("echo 'RapidMenu -c " + std::string(bconfig) + "' >> " +
+                std::string(bexe))
+                   .c_str());
 
-        }else{
-            std::cerr << USAGE.c_str();
-            return 1;
+        break;
+      } else {
+        std::cerr << USAGE;
+        return 1;
+      }
+    } else {
+      std::cerr << USAGE;
+      return 1;
     }
-    return 0;
+  }
 }
