@@ -1,6 +1,6 @@
 pkgname=RapidMenu-git
 _gitname=RapidMenu
-pkgver=0.2.4
+pkgver=0.3
 pkgrel=1
 pkgdesc="Utilize configuration files to create runner scripts."
 url="https://github.com/DRAGONTOS/RapidMenu"

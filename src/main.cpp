@@ -16,14 +16,14 @@ void clearBuffer() {
 }
 
 inline void checkIfExtractionFailed() {
-  if (!std::cin) {        // if previous extraction failed
-    if (std::cin.eof()) { // check if eof and if yes aborts the program
+  if (!std::cin) {          // if previous extraction failed
+    if (std::cin.eof()) {   // check if eof and if yes aborts the program
       std::abort();
     }
 
-    std::cin.clear(); // put std::cin back into normal mode
-    clearBuffer();    // remove bad input
+  std::cin.clear(); // put std::cin back into normal mode
   }
+  clearBuffer();    // remove bad input
 }
 
 const std::string USAGE = R"#(usage:  RapidMenu [flags] [<command> [args]]
@@ -41,15 +41,14 @@ struct Action {
   std::string command;
 
   Action(const std::string &nms = "", const std::string &desc = "",
-         const std::string &cmd = "")
-      : names(nms), description(desc), command(cmd) {}
+         const std::string &cmd = "") : names(nms), description(desc), command(cmd) {}
 };
 
 void from_toml(const cpptoml::table &t, Action &a) {
   try {
-    a.names = *t.get_as<std::string>("names");
+    a.names       = *t.get_as<std::string>("names");
     a.description = *t.get_as<std::string>("description");
-    a.command = *t.get_as<std::string>("command");
+    a.command     = *t.get_as<std::string>("command");
   } catch (const cpptoml::parse_exception &e) {
     throw std::invalid_argument(invalidvalue.c_str());
   }
@@ -60,7 +59,7 @@ int main(int argc, char **argv, char **envp) {
   const char *userHome = getenv("HOME");
 
   std::string rapidMenuPath = std::string(userHome) + "/.config/RapidMenu";
-  std::string rapidcommand = "mkdir -p " + rapidMenuPath;
+  std::string rapidcommand  = "mkdir -p " + rapidMenuPath;
 
   std::vector<std::string> ARGS{argv, argv + argc};
   for (int i = 0; i < argc; ++i) {
@@ -72,8 +71,7 @@ int main(int argc, char **argv, char **envp) {
     return 1;
   }
 
-  if (std::filesystem::exists(rapidMenuPath) &&
-      std::filesystem::is_directory(rapidMenuPath)) {
+  if (std::filesystem::exists(rapidMenuPath) && std::filesystem::is_directory(rapidMenuPath)) {
   } else {
     system(rapidcommand.c_str());
     std::cerr << "Setting up the config directory: " << rapidMenuPath;
@@ -129,18 +127,11 @@ int main(int argc, char **argv, char **envp) {
 
           namesList = namesStream.str();
 
-          std::string rname = config->get_table("runner")
-                                  ->get_as<std::string>("rname")
-                                  .value_or("dashboard:");
-          std::string rtheme = config->get_table("runner")
-                                   ->get_as<std::string>("rtheme")
-                                   .value_or("");
-          std::string rcommand = config->get_table("runner")
-                                     ->get_as<std::string>("rcommand")
-                                     .value_or("rofi -dmenu -p");
+          std::string rname     = config->get_table("runner") ->get_as<std::string>("rname") .value_or("dashboard:");
+          std::string rtheme    = config->get_table("runner") ->get_as<std::string>("rtheme") .value_or("");
+          std::string rcommand  = config->get_table("runner") ->get_as<std::string>("rcommand") .value_or("rofi -dmenu -p");
 
-          std::string rofiCommand = "printf '" + namesList + "' | " + rcommand +
-                                    " '" + rname + " ' " + rtheme;
+          std::string rofiCommand = "printf '" + namesList + "' | " + rcommand + " '" + rname + " ' " + rtheme;
           FILE *rofiProcess = popen(rofiCommand.c_str(), "r");
 
           char buffer[256];
@@ -150,9 +141,7 @@ int main(int argc, char **argv, char **envp) {
             userChoice += buffer;
           }
 
-          userChoice.erase(remove_if(userChoice.begin(), userChoice.end(),
-                                     [](char c) { return c == '\n'; }),
-                           userChoice.end());
+          userChoice.erase(remove_if(userChoice.begin(), userChoice.end(), [](char c) { return c == '\n'; }), userChoice.end());
           for (const auto &tableItem : *config) {
             try {
               const auto &table = tableItem.second->as_table();
@@ -185,9 +174,9 @@ int main(int argc, char **argv, char **envp) {
             return 1;
         }
         // executable
-        const char *bconfig = nullptr;
-        const char *bexe = nullptr;
-        const char *userHome = getenv("HOME");
+        const char *bconfig   = nullptr;
+        const char *bexe      = nullptr;
+        const char *userHome  = getenv("HOME");
 
         std::string bexeout;
         std::string byn;
@@ -195,8 +184,7 @@ int main(int argc, char **argv, char **envp) {
         std::string bindir = std::string(userHome) + "/.local/bin";
         std::string createbindir = "mkdir -p " + bindir;
 
-        if (std::filesystem::exists(bindir) &&
-            std::filesystem::is_directory(bindir)) {
+        if (std::filesystem::exists(bindir) && std::filesystem::is_directory(bindir)) {
         } else {
           system(createbindir.c_str());
           std::cerr << "Setting up bin dir.";
@@ -205,13 +193,11 @@ int main(int argc, char **argv, char **envp) {
 
         // config
         std::string bconfigfile = bconfigin;
-        if (std::filesystem::exists(bconfigfile) &&
-            std::filesystem::is_regular_file(bconfigfile)) {
+        if (std::filesystem::exists(bconfigfile) && std::filesystem::is_regular_file(bconfigfile)) {
           bconfig = argv[2];
 
         } else {
-          while (!(std::filesystem::exists(bconfigfile) &&
-                   std::filesystem::is_regular_file(bconfigfile))) {
+          while (!(std::filesystem::exists(bconfigfile) && std::filesystem::is_regular_file(bconfigfile))) {
             std::cout << "Invalid config file: " << bconfigfile << ' ';
             std::cout << "Please enter a valid config: ";
             std::cin >> bconfigfile;
@@ -228,10 +214,8 @@ int main(int argc, char **argv, char **envp) {
         clearBuffer();
         std::string bexefile = std::string(userHome) + "/.local/bin/" + bexeout;
 
-        if (std::filesystem::exists(bexefile) &&
-            std::filesystem::is_regular_file(bexefile)) {
-          while (std::filesystem::exists(bexefile) &&
-                 std::filesystem::is_regular_file(bexefile)) {
+        if (std::filesystem::exists(bexefile) && std::filesystem::is_regular_file(bexefile)) {
+          while (std::filesystem::exists(bexefile) && std::filesystem::is_regular_file(bexefile)) {
             std::cout << "do you want to overwrite: " << bexeout << "? (y/n) ";
             std::cin >> byn;
             checkIfExtractionFailed();
@@ -256,13 +240,10 @@ int main(int argc, char **argv, char **envp) {
 
         system(("touch " + bexefile + std::string(bexe)).c_str());
         system(("chmod +x " + bexefile + std::string(bexe)).c_str());
-        system(("echo '#!/usr/bin/env bash' > " + bexefile + std::string(bexe))
-                   .c_str());
-        system(("echo 'RapidMenu -c " + std::string(bconfig) + "' >> " +
-                std::string(bexe))
-                   .c_str());
-
+        system(("echo '#!/usr/bin/env bash' > " + bexefile + std::string(bexe)).c_str());
+        system(("echo 'RapidMenu -c " + std::string(bconfig) + "' >> " + std::string(bexe)).c_str());
         break;
+
       } else {
         std::cerr << USAGE;
         return 1;
