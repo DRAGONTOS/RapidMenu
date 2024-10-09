@@ -5,54 +5,12 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
-#include <ios>
 #include <iostream>
-#include <limits>
 #include <stdexcept>
 #include <string>
-
-void clearBuffer() {
-  std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-}
-
-inline void checkIfExtractionFailed() {
-  if (!std::cin) {          // if previous extraction failed
-    if (std::cin.eof()) {   // check if eof and if yes aborts the program
-      std::abort();
-    }
-
-  std::cin.clear(); // put std::cin back into normal mode
-  }
-  clearBuffer();    // remove bad input
-}
-
-const std::string USAGE = R"#(usage:  RapidMenu [flags] [<command> [args]]
-LISTING COMMANDS:
-    -c:           To specify which config to use.
-    -b:           Make a executable out of a config.
-)#";
-
-const std::string invalidvalue = R"#(Invalid value in config: )#";
-const std::string invalidconfig = R"#(Not a valid config: )#";
-
-struct Action {
-  std::string names;
-  std::string description;
-  std::string command;
-
-  Action(const std::string &nms = "", const std::string &desc = "",
-         const std::string &cmd = "") : names(nms), description(desc), command(cmd) {}
-};
-
-void from_toml(const cpptoml::table &t, Action &a) {
-  try {
-    a.names       = *t.get_as<std::string>("names");
-    a.description = *t.get_as<std::string>("description");
-    a.command     = *t.get_as<std::string>("command");
-  } catch (const cpptoml::parse_exception &e) {
-    throw std::invalid_argument(invalidvalue.c_str());
-  }
-}
+#include "includes/ConfigManager.hpp"
+#include "includes/Strings.hpp"
+#include "includes/utils.hpp"
 
 int main(int argc, char **argv, char **envp) {
 
@@ -89,7 +47,7 @@ int main(int argc, char **argv, char **envp) {
         return 1;
       } else if (ARGS[i] == "-c") {
         if (argc < 3 || argv[2][0] == '-') {
-            std::cerr << USAGE.c_str();
+            std::cerr << USAGE;
             return 1;
         }
         const char *configFile = nullptr;
@@ -111,7 +69,7 @@ int main(int argc, char **argv, char **envp) {
               reversedNamesList.push_back(a.names);
 
             } catch (const std::invalid_argument &e) {
-              std::cerr << invalidvalue.c_str() << e.what();
+              std::cerr << invalidvalue << e.what();
               return 1;
             }
           }
@@ -170,7 +128,7 @@ int main(int argc, char **argv, char **envp) {
         break;
       } else if (ARGS[i] == "-b") {
         if (argc < 3 || argv[2][0] == '-') {
-            std::cerr << USAGE.c_str();
+            std::cerr << USAGE;
             return 1;
         }
         // executable
