@@ -40,8 +40,6 @@ void from_toml(const cpptoml::table& t, Action& a) {
     }
 }
 
-
-
 void runnercmd(const std::string cmd, std::string configfile) {
     // fixes a stupid compiler warning
     auto config = cpptoml::parse_file(configfile);
@@ -160,25 +158,7 @@ void config(cmd *inputCmd) {
         } catch (const std::runtime_error& e) {
             std::cerr << "\nError: " << e.what() << "\n";
         }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    } catch (const std::exception &e) {  // Catch all config errors
+    } catch (const std::exception &e) {  
         std::cerr << "Config error: " << e.what() << "\n";
-        // Consider setting default values or error state:
-        // inputCmd->error = true;
     }
 }
