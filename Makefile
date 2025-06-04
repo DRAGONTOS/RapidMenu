@@ -1,4 +1,4 @@
-NAME = RapidMenu
+NAME = stc
 PREFIX = /usr
 
 all:
@@ -14,11 +14,11 @@ clear:
 	rm -rf build
 
 install.core:
-	@if [ ! -f ./build/RapidMenu ]; then echo -en "You need to run $(MAKE) all first.\n" && exit 1; fi
-	@echo -en "!NOTE: Please note make install does not compile RapidMenu and only installs the already built files."
+	@if [ ! -f ./build/stc ]; then echo -en "You need to run $(MAKE) all first.\n" && exit 1; fi
+	@echo -en "!NOTE: Please note make install does not compile stc and only installs the already built files."
 	mkdir -p ${PREFIX}/bin
-	cp -f ./build/RapidMenu ${PREFIX}/bin
-	chmod 755 ${PREFIX}/bin/RapidMenu
+	cp -f ./build/stc ${PREFIX}/bin
+	chmod 755 ${PREFIX}/bin/stc
 
 install: install.core
 

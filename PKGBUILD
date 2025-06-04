@@ -1,6 +1,6 @@
 pkgname=RapidMenu-git
 _gitname=RapidMenu
-pkgver=0.3
+pkgver=0.4.0
 pkgrel=1
 pkgdesc="Utilize configuration files to create runner scripts."
 url="https://github.com/DRAGONTOS/RapidMenu"
@@ -14,17 +14,17 @@ source=('git+https://github.com/DRAGONTOS/RapidMenu.git')
 md5sums=('SKIP')
 
 prepare() {
-  rm -rf build
+    rm -rf build
 }
 
 build() {
-  cd ${_gitname}
-  cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Debug -S . -B ./build -G Ninja
-  cmake --build ./build
-  chmod -R 777 ./build
+    cd ${_gitname}
+    cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Debug -S . -B ./build -G Ninja
+    cmake --build ./build
+    chmod -R 777 ./build
 }
 
 package() {
-  cd ${_gitname}
-  sudo make install
+    cd ${_gitname}
+    sudo make install
 }
