@@ -68,5 +68,5 @@ void executable(cmd *inputCmd) {
     fileb << "#!/usr/bin/env bash" << "\n" << std::string(rapidmenucommand).c_str() << "\n";
     std::filesystem::permissions(bexefile, std::filesystem::perms::owner_all | std::filesystem::perms::group_all, std::filesystem::perm_options::add);
     fileb.close();
-    exit(1);
+    exit(0);
 }

@@ -7,12 +7,8 @@
 #include "includes/executabel.hpp"
 
 int main(int argc, char **argv, char **envp) {
-    // cmd inputCmd;
     cmd inputCmd;
     std::vector<std::string> ARGS{argv, argv + argc};
-    for (int i = 0; i < argc; ++i) {
-        ARGS[i] = std::string{argv[i]};
-    }
 
     if (ARGS.size() < 2) {
         std::cout << USAGE;
@@ -20,59 +16,45 @@ int main(int argc, char **argv, char **envp) {
     }
 
     for (int i = 1; i < argc; ++i) {
-        std::string arg = argv[i];
-        if (arg.find('-') == 0) {
-            if (ARGS[i] == "-h") {
-                if (argc < 3 || argv[2][0] == '-') {
-                    std::cerr << HELP;
-                    return 1;
-                }
-                std::cerr << HELP;
-                return 1;
-            }
-
-            // config runner
-            if (ARGS[i] == "-c") {
-                if (argc < 3 || argv[2][0] == '-') {
-                    std::cerr << USAGE;
-                    return 1;
-                }
-            
-                if (argc == 3) {
-                    inputCmd.config = ARGS[1 + 1];
-                } else {
-                    std::cerr << HELP;
-                    return 1;
-                }
-
-                config(&inputCmd);
-                return 1;
-            } 
-
-            // creates executable
-            if (ARGS[i] == "-b") {
-                if (argc < 3 || argv[2][0] == '-') {
-                    std::cerr << USAGE;
-                    return 1;
-                }
-                
-                if (argc == 4) {
-                    inputCmd.config  = ARGS[1 + 1];
-                    inputCmd.exename = ARGS[1 + 2];
-                } else {
-                    std::cerr << HELP;
-                    return 1;
-                }
-
-                std::cout << "config: " << inputCmd.config << " bindir: " << inputCmd.exename << "\n";
-
-                executable(&inputCmd);
-                return 1;
-            }
+        std::string arg = ARGS[i];
+        if (arg.find('-') != 0) {
+            continue;
         }
+
+        if (arg == "-h") {
+            std::cerr << HELP;
+            return 0;
+        }
+
+        // config runner
+        if (arg == "-c") {
+            if (argc != 3) {
+                std::cerr << USAGE;
+                return 1;
+            }
+
+            inputCmd.config = ARGS[2];
+            config(&inputCmd);
+            return 0;
+        }
+
+        // creates executable
+        if (arg == "-b") {
+            if (argc != 4) {
+                std::cerr << USAGE;
+                return 1;
+            }
+
+            inputCmd.config = ARGS[2];
+            inputCmd.exename = ARGS[3];
+            executable(&inputCmd);
+            return 0;
+        }
+
+        std::cerr << USAGE;
+        return 1;
     }
 
-                     
-    std::cout << "\nArguments: " << argc << std::endl;
-    return 0;
+    std::cerr << USAGE;
+    return 1;
 }
