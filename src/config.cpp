@@ -175,6 +175,7 @@ void config(cmd *inputCmd) {
             + rcommand
             + " "
             + shellquote(rname + " ")
+            + " "
             + rtheme;
 
         // executes runnerCommand
