@@ -11,6 +11,9 @@ int main(int argc, char **argv, char **envp) {
     std::vector<std::string> ARGS{argv, argv + argc};
 
     if (ARGS.size() < 2) {
+        if (setupconfigdir()) {
+            return 0;
+        }
         std::cout << USAGE;
         return 1;
     }

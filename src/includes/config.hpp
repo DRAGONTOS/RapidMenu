@@ -2,6 +2,7 @@
 #define CONFIG_H
 #include "Strings.hpp"
 
+bool setupconfigdir();
 void config(cmd *inputCmd);
 
 #endif // !CONFIG_H

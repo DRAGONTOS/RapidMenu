@@ -7,13 +7,10 @@
 #include <sstream>
 #include <string>
 #include <stdexcept>
-#include <string>
 #include <filesystem>
+#include <system_error>
 #include <vector>
 #include <cstdlib>       // for setenv
-#include <sstream>       // for ostringstream
-#include <algorithm>     // for reverse
-#include <cpptoml.h>     // for toml parsing
 #include "includes/Strings.hpp"
 
 struct Action {
@@ -100,21 +97,30 @@ void runnercmd(const std::string cmd, std::string configfile) {
     exit(1);
 }
 
-void config(cmd *inputCmd) {
-    // chars
+bool setupconfigdir() {
     const char *userHome = getenv("HOME");
-    const char *configFile = nullptr;
-
-    // strings
-    std::string configfile    = inputCmd->config;
     std::string rapidMenuPath = std::string(userHome) + "/.config/RapidMenu";
-    std::string rapidcommand  = "mkdir -p " + rapidMenuPath;
+
+    if (std::filesystem::exists(rapidMenuPath) && std::filesystem::is_directory(rapidMenuPath)) {
+        return false;
+    }
+
+    std::error_code ec;
+    std::filesystem::create_directories(rapidMenuPath, ec);
+    if (ec) {
+        std::cerr << "Could not create " << rapidMenuPath << ": " << ec.message() << "\n";
+        exit(1);
+    }
+
+    std::cout << "Created " << rapidMenuPath << "\n";
+    return true;
+}
+
+void config(cmd *inputCmd) {
+    std::string configfile = inputCmd->config;
 
     // adds the rapidmenu config if it doesnt exist
-    if (std::filesystem::exists(rapidMenuPath) && std::filesystem::is_directory(rapidMenuPath)) {
-    } else {
-        system(rapidcommand.c_str());
-        std::cerr << "Setting up the config directory: " << rapidMenuPath << "\n";
+    if (setupconfigdir()) {
         exit(1);
     }
 

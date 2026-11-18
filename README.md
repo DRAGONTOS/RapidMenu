@@ -62,9 +62,10 @@ to make a dashboard, then call it dashboard.conf. For games, use games.conf etc.
 
 ### How to use (-b)
 Just use this command, it will throw an error if incorrect.
-Also, it will ask what you want to name the executable, and if it already exists.
+The name of the executable is required as the second argument, and it will
+ask before overwriting one that already exists.
 ```
-RapidMenu -b [config]
+RapidMenu -b [config] [exename]
 ```
 
 ## Configuration
