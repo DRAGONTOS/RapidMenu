@@ -40,20 +40,38 @@ void from_toml(const cpptoml::table& t, Action& a) {
     }
 }
 
+std::string shellquote(const std::string value) {
+    std::string quoted = "'";
+    for (const char c : value) {
+        if (c == '\'') {
+            quoted += "'\\''";
+        } else {
+            quoted += c;
+        }
+    }
+    quoted += "'";
+    return quoted;
+}
+
 void runnercmd(const std::string cmd, std::string configfile) {
     // fixes a stupid compiler warning
     auto config = cpptoml::parse_file(configfile);
     auto pipe_deleter = [](FILE* fp) { pclose(fp); };
     std::unique_ptr<FILE, decltype(pipe_deleter)> pipe(popen(cmd.c_str(), "r"), pipe_deleter);
-   
+
     char buffer[256];
     std::string userChoice;
 
     while (fgets(buffer, sizeof(buffer), pipe.get()) != nullptr) {
         userChoice += buffer;
     }
-    
+
     userChoice.erase(remove_if(userChoice.begin(), userChoice.end(), [](char c) { return c == '\n'; }), userChoice.end());
+    if (userChoice.empty()) {
+        std::cerr << "No action selected.\n";
+        return;
+    }
+
     for (const auto &tableItem : *config) {
         try {
           const auto &table = tableItem.second->as_table();
@@ -62,12 +80,15 @@ void runnercmd(const std::string cmd, std::string configfile) {
 
             Action a;
             from_toml(*table, a);
+            std::cout << a.description << std::endl;
+
             int bashResult = system(a.command.c_str());
-            std::cout << a.description;
 
             if (bashResult != 0) {
               std::cerr << invalidvalue.c_str() << a.command;
+              exit(1);
             }
+            return;
           }
         } catch (const std::invalid_argument &e) {
           std::cerr << invalidvalue.c_str() << e.what();
@@ -75,6 +96,8 @@ void runnercmd(const std::string cmd, std::string configfile) {
         }
     }
 
+    std::cerr << "No action named " << userChoice << " in the config.\n";
+    exit(1);
 }
 
 void config(cmd *inputCmd) {
@@ -140,13 +163,12 @@ void config(cmd *inputCmd) {
         std::string rtheme    = config->get_table("runner") ->get_as<std::string>("rtheme") .value_or("");
         std::string rcommand  = config->get_table("runner") ->get_as<std::string>("rcommand") .value_or("rofi -dmenu -p");
 
-        std::string runnerCommand = "printf '"
-            + namesList
-            + "' | "
+        std::string runnerCommand = "printf '%s' "
+            + shellquote(namesList)
+            + " | "
             + rcommand
-            + " '"
-            + rname
-            + " ' "
+            + " "
+            + shellquote(rname + " ")
             + rtheme;
 
         // executes runnerCommand
