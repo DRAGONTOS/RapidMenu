@@ -1,6 +1,6 @@
 # Agent guide
 
-RapidMenu is a small CLI tool that turns TOML config files into menus for a runner like rofi, dmenu or bemenu: it parses the config, prints the action names, pipes them into the runner and executes the command of whatever the user picks. It can also emit a tiny bash wrapper script (`-b`) so a config can be launched as its own command. Written in C++26 on CMake and Ninja, parses TOML with cpptoml (tomlplusplus is a declared dep too). Packaged as a deb, an rpm and an Arch `PKGBUILD`. Contributors: DRAGONTOS, maukkis.
+RapidMenu is a small CLI tool that turns TOML config files into menus for a runner like rofi, dmenu or bemenu: it parses the config, prints the action names, pipes them into the runner and executes the command of whatever the user picks. It can also emit a tiny bash wrapper script (`-b`) so a config can be launched as its own command. Written in C++26 on CMake and Ninja, parses TOML with the vendored cpptoml (`external/`). Packaged as a deb, an rpm and an Arch `PKGBUILD`. Contributors: DRAGONTOS, maukkis.
 
 Cross-session handoff notes for this project live in `~/.local/share/agents/rapidmenu-handoff.md`. Read that file first when resuming after a context reset, and update it when state changes (commits, queue changes, new gotchas).
 
@@ -36,7 +36,7 @@ makepkg -si PKGBUILD       # Arch
 | `RapidMenu` | Bare run: sets up `~/.config/RapidMenu` if missing, else prints usage. |
 | `RapidMenu -c <config>` | Parse the config, show the menu through its `[runner]` and run the picked action. |
 | `RapidMenu -b <config> <exename>` | Write an executable wrapper for the config into `~/.local/bin/<exename>`. |
-| `RapidMenu -h` | Help (stderr, exit 1). |
+| `RapidMenu -h` | Help (stdout, exit 0). |
 
 Every config needs a `[runner]` table (`rname`, `rtheme`, `rcommand` — the last defaults to `rofi -dmenu -p`); each other table is an action with `names`, optional `description` and `command`.
 
@@ -71,4 +71,3 @@ Every config needs a `[runner]` table (`rname`, `rtheme`, `rcommand` — the las
 - `config` `exit(1)`s after creating the config dir, so a first `-c` run only sets the dir up and the user must invoke again; a bare run creates it and exits 0.
 - Success paths return 0 since the 2026-11-18 fixes: `-h`, `-c`, `-b` and `executable`'s wrapper write; failure paths (bad config, no match, failed action command, unknown flag) return 1.
 - `main.cpp` arg parsing: each flag branch checks `argc` itself (`-c` wants exactly one arg, `-b` exactly two); unknown flags print USAGE and return 1. Watch these checks when adding flags or reordering args.
-- The `-h` argc checks (`argc < 3 || argv[2][0] == '-'`) that used to be copied into every branch are gone — flags now validate their own arg counts.
