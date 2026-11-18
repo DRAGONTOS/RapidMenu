@@ -23,3 +23,4 @@ install.core:
 install: install.core
 
 uninstall:
+	rm -f ${PREFIX}/bin/RapidMenu
