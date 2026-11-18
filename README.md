@@ -51,14 +51,14 @@ LISTING COMMANDS:
 ```
 
 ### You will need to first setup the config dir
-To do that you just need to, use this command.
+To do that you just need to, use this command:
 ```
 RapidMenu
 ```
 And it should say "Created /home/$USER/.config/RapidMenu".
 
 ### How to use (-c) 
-If you want to open a configuration, just use this command.
+If you want to open a configuration, just use this command:
 ```
 RapidMenu -c [config]
 ```
