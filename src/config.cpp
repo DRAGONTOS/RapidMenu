@@ -37,7 +37,7 @@ void from_toml(const cpptoml::table& t, Action& a) {
     }
 }
 
-std::string shellquote(const std::string value) {
+std::string shellquote(const std::string& value) {
     std::string quoted = "'";
     for (const char c : value) {
         if (c == '\'') {
