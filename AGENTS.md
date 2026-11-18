@@ -64,9 +64,10 @@ Every config needs a `[runner]` table (`rname`, `rtheme`, `rcommand` — the las
 
 - CMake only `pkg_check_modules`s **tomlplusplus**, but the code parses with **cpptoml** (`cpptoml.h`). It works only because cpptoml is header-only and installed; both packages must be present (the PKGBUILD and README list both).
 - `namesList` is built by `std::reverse`ing the table iteration order — the menu shows actions bottom-to-top of the config file. If listing order ever looks wrong, that reverse is why.
-- The runner command is a single concatenated shell string passed through `popen`, and action commands go through `system`. A `names`/`rname`/`rtheme` value containing a single quote or shell metachar breaks the command, and config values are effectively shell-executed — don't "simplify" by trusting them.
-- `config` `exit(1)`s after creating the config dir, so a first run only sets the dir up and the user must invoke again.
-- Success paths still return 1: `-c`/`-b` fall through to `return 1` in `main.cpp`, and `executable` ends in `exit(1)`.
+- The runner command is a single concatenated shell string passed through `popen`, and action commands go through `system`. `namesList` and `rname` are `shellquote`d and names go through `printf '%s'` (a `'` or `%` in a name is safe), but `rcommand` and `rtheme` stay raw on purpose — they are shell text by design, so config values there are still effectively shell-executed. Don't "simplify" by trusting them.
+- `config` `exit(1)`s after creating the config dir, so a first `-c` run only sets the dir up and the user must invoke again; a bare run creates it and exits 0.
+- Success paths return 0 since the 2026-11-18 fixes: `-h`, `-c`, `-b` and `executable`'s wrapper write; failure paths (bad config, no match, failed action command, unknown flag) return 1.
 - The Makefile `release` target builds with `CMAKE_BUILD_TYPE=Debug`, and both the Makefile and PKGBUILD do `chmod -R 777 ./build`.
 - The PKGBUILD runs `sudo make install` inside `package()` — never run it in a sandbox.
-- `main.cpp` has `-h`-style argc checks (`argc < 3 || argv[2][0] == '-'`) copied into the `-c` and `-b` branches where `argv[2]` is not necessarily the flag's own argument; watch this when adding flags or reordering args.
+- `main.cpp` arg parsing: each flag branch checks `argc` itself (`-c` wants exactly one arg, `-b` exactly two); unknown flags print USAGE and return 1. Watch these checks when adding flags or reordering args.
+- The `-h` argc checks (`argc < 3 || argv[2][0] == '-'`) that used to be copied into every branch are gone — flags now validate their own arg counts.
