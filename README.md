@@ -2,8 +2,8 @@
 Utilize configuration files to create runner scripts.
 
 # Requirements
-- cpptoml (header-only, build time only)
-- a runner like rofi, dmenu etc
+None besides a compiler — cpptoml is vendored in `external/` (MIT, see
+`external/cpptoml-LICENSE`). You do need a runner like rofi, dmenu etc.
 
 # Installing
 

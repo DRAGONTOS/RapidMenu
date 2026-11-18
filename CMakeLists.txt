@@ -8,9 +8,6 @@ project(RapidMenu
   DESCRIPTION "Utilize configuration files to create runner scripts."
   VERSION ${VER})
 
-# Find dependencies (cpptoml is header-only and ships no pkg-config file)
-find_path(CPPTOML_INCLUDE_DIR cpptoml.h REQUIRED)
-
 set(CMAKE_CXX_STANDARD 26)
 
 # Set build type if not specified
@@ -30,9 +27,9 @@ add_executable(RapidMenu ${RAPIDMENU_SOURCE_FILES})
 install(TARGETS RapidMenu DESTINATION bin)
 install(FILES assets/dashboard.conf DESTINATION share/doc/RapidMenu/examples)
 
-# Include directories
+# Include directories (cpptoml is vendored in external/)
 target_include_directories(RapidMenu PRIVATE 
-  ${CPPTOML_INCLUDE_DIR})
+  ${CMAKE_CURRENT_SOURCE_DIR}/external)
 
 # Package configuration
 set(CPACK_PACKAGE_VENDOR "DRAGONTOS")
