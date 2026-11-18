@@ -4,27 +4,29 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
-#include <ios>
 #include <iostream>
 #include <limits>
 #include <string>
-#include <sys/stat.h>
+#include <system_error>
 
 void executable(cmd *inputCmd) {
     const char *userHome = getenv("HOME");
     std::string bindir   = std::string(userHome) + "/.local/bin";
-    
+
     //sets up bindir
-    if (std::filesystem::exists(bindir) && std::filesystem::is_directory(bindir)) {
-    } else {
-        mkdir(bindir.c_str(), 0777);
+    if (!std::filesystem::exists(bindir) || !std::filesystem::is_directory(bindir)) {
+        std::error_code ec;
+        std::filesystem::create_directories(bindir, ec);
+        if (ec) {
+            std::cerr << "Could not create " << bindir << ": " << ec.message() << "\n";
+            exit(1);
+        }
         std::cerr << "Setting up bin dir.\n";
     }
-    
+
     // checks if config file is accurate
-    if (std::filesystem::exists(inputCmd->config) && std::filesystem::is_regular_file(inputCmd->config)) {
-    } else {
-        std::cerr << "Invalid config file.\n"; 
+    if (!std::filesystem::exists(inputCmd->config) || !std::filesystem::is_regular_file(inputCmd->config)) {
+        std::cerr << "Invalid config file.\n";
         exit(1);
     }
 

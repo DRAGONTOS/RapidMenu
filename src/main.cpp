@@ -4,7 +4,7 @@
 #include <vector>
 #include "includes/Strings.hpp"
 #include "includes/config.hpp"
-#include "includes/executabel.hpp"
+#include "includes/executable.hpp"
 
 int main(int argc, char **argv, char **envp) {
     cmd inputCmd;
@@ -25,7 +25,7 @@ int main(int argc, char **argv, char **envp) {
         }
 
         if (arg == "-h") {
-            std::cerr << HELP;
+            std::cout << HELP;
             return 0;
         }
 

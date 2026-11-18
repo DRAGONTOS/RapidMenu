@@ -10,7 +10,7 @@
 #include <filesystem>
 #include <system_error>
 #include <vector>
-#include <cstdlib>       // for setenv
+#include <cstdlib>
 #include "includes/Strings.hpp"
 
 struct Action {
@@ -50,9 +50,7 @@ std::string shellquote(const std::string& value) {
     return quoted;
 }
 
-void runnercmd(const std::string cmd, std::string configfile) {
-    // fixes a stupid compiler warning
-    auto config = cpptoml::parse_file(configfile);
+void runnercmd(const std::string cmd, const std::shared_ptr<cpptoml::table>& config) {
     auto pipe_deleter = [](FILE* fp) { pclose(fp); };
     std::unique_ptr<FILE, decltype(pipe_deleter)> pipe(popen(cmd.c_str(), "r"), pipe_deleter);
 
@@ -70,26 +68,25 @@ void runnercmd(const std::string cmd, std::string configfile) {
     }
 
     for (const auto &tableItem : *config) {
-        try {
-          const auto &table = tableItem.second->as_table();
-          if (table->get_as<std::string>("names").value_or("") ==
-              userChoice) {
+        const auto table = tableItem.second->as_table();
+        if (!table) {
+            continue;
+        }
 
-            Action a;
-            from_toml(*table, a);
-            std::cout << a.description << std::endl;
+        if (table->get_as<std::string>("names").value_or("") ==
+            userChoice) {
 
-            int bashResult = system(a.command.c_str());
+          Action a;
+          from_toml(*table, a);
+          std::cout << a.description << std::endl;
 
-            if (bashResult != 0) {
-              std::cerr << invalidvalue.c_str() << a.command;
-              exit(1);
-            }
-            return;
+          int bashResult = system(a.command.c_str());
+
+          if (bashResult != 0) {
+            std::cerr << invalidvalue.c_str() << a.command;
+            exit(1);
           }
-        } catch (const std::invalid_argument &e) {
-          std::cerr << invalidvalue.c_str() << e.what();
-          exit(1);
+          return;
         }
     }
 
@@ -117,8 +114,6 @@ bool setupconfigdir() {
 }
 
 void config(cmd *inputCmd) {
-    std::string configfile = inputCmd->config;
-
     // adds the rapidmenu config if it doesnt exist
     if (setupconfigdir()) {
         exit(1);
@@ -126,27 +121,24 @@ void config(cmd *inputCmd) {
 
     // config handling
     try {
-        // 1. Parse config file
         auto config = cpptoml::parse_file(inputCmd->config);
-        setenv("LC_CTYPE", "en_US.UTF-8", 1);
 
         std::string namesList;
         std::vector<std::string> reversedNamesList;
 
         // Process each item in config
         for (const auto &tableItem : *config) {
-            try {
-                Action a;
-                from_toml(*tableItem.second->as_table(), a);
-                reversedNamesList.push_back(a.names);
-
-            } catch (const std::exception &e) {  // Catch all exceptions
-                std::cerr << "Error processing action: " << e.what() << "\n";
-                exit(1);  // Skip to next item
+            const auto table = tableItem.second->as_table();
+            if (!table) {
+                continue;
             }
+
+            Action a;
+            from_toml(*table, a);
+            reversedNamesList.push_back(a.names);
         }
 
-        //reverses the namelist
+        // the menu shows the config's actions bottom-to-top, intentional
         std::reverse(reversedNamesList.begin(), reversedNamesList.end());
 
         std::ostringstream namesStream;
@@ -180,14 +172,10 @@ void config(cmd *inputCmd) {
 
         // executes runnerCommand
         std::cout << "Executing config: " << inputCmd->config << "\n";
-        
-        try {
-            runnercmd(runnerCommand, configfile);
-                
-        } catch (const std::runtime_error& e) {
-            std::cerr << "\nError: " << e.what() << "\n";
-        }
-    } catch (const std::exception &e) {  
+
+        runnercmd(runnerCommand, config);
+    } catch (const std::exception &e) {
         std::cerr << "Config error: " << e.what() << "\n";
+        exit(1);
     }
 }
