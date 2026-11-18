@@ -2,11 +2,16 @@
 Utilize configuration files to create runner scripts.
 
 # Requirements
-- cpptoml
-- tomlplusplus
+- cpptoml (header-only, build time only)
 - a runner like rofi, dmenu etc
 
 # Installing
+
+From the releases (x86_64 linux):
+Download the binary, deb or rpm from the releases page — every master push
+rebuilds a rolling `latest` prerelease, and `v*` tags make pinned releases.
+
+From source:
 
 From source:
 ```
@@ -70,6 +75,8 @@ RapidMenu -b [config] [exename]
 
 ## Configuration
 It is required to have the [runner] section in the configuration.
+An example config ships with the deb, rpm and Arch package in
+`/usr/share/doc/RapidMenu/examples/dashboard.conf`.
 Example:
 ```
 [runner]

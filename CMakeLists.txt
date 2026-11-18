@@ -4,13 +4,12 @@ cmake_minimum_required(VERSION 3.28.2)
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/props.json PROPS)
 string(JSON VER GET ${PROPS} version)
 
-# Find dependencies
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(TOMLPLUSPLUS REQUIRED tomlplusplus)
-
 project(RapidMenu
   DESCRIPTION "Utilize configuration files to create runner scripts."
   VERSION ${VER})
+
+# Find dependencies (cpptoml is header-only and ships no pkg-config file)
+find_path(CPPTOML_INCLUDE_DIR cpptoml.h REQUIRED)
 
 set(CMAKE_CXX_STANDARD 26)
 
@@ -29,13 +28,11 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 # Add the executable target for RapidMenu
 add_executable(RapidMenu ${RAPIDMENU_SOURCE_FILES})
 install(TARGETS RapidMenu DESTINATION bin)
+install(FILES assets/dashboard.conf DESTINATION share/doc/RapidMenu/examples)
 
-# Link libraries and include directories
-target_link_libraries(RapidMenu PRIVATE 
-  ${TOMLPLUSPLUS_LIBRARIES})
-
+# Include directories
 target_include_directories(RapidMenu PRIVATE 
-  ${TOMLPLUSPLUS_INCLUDE_DIRS})
+  ${CPPTOML_INCLUDE_DIR})
 
 # Package configuration
 set(CPACK_PACKAGE_VENDOR "DRAGONTOS")
